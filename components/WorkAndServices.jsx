@@ -196,8 +196,7 @@ export default function WorkAndServices({onPreloadNext}) {
     {scope: containerRef},
   );
 
-  const blockClass =
-    "flex-shrink-0 w-[calc(100%-3rem)] md:w-[45vw] h-full flex items-center justify-center px-0 md:px-10 border-r border-white/10";
+    const blockClass = "flex-shrink-0 w-[calc(100vw-2rem)] sm:w-[calc(100vw-3rem)] md:w-[45vw] h-full flex items-center justify-center px-0 sm:px-6 md:px-10 border-r border-white/10";
 
   return (
     <section
@@ -217,12 +216,12 @@ export default function WorkAndServices({onPreloadNext}) {
           <div className={blockClass}>
             <div
               ref={(el) => (cardInnerRefs.current[0] = el)}
-              className="max-w-md w-full will-change-transform px-6 md:px-0">
-              <p className="mb-8 text-[0.68rem] font-light tracking-[0.28em] uppercase text-[#75706f] font-neuehaas">
+              className="max-w-md w-full will-change-transform px-5 sm:px-6 md:px-0">
+              <p className="mb-5 sm:mb-8 text-[0.58rem] sm:text-[0.68rem] font-light tracking-[0.2em] sm:tracking-[0.28em] uppercase text-[#75706f] font-neuehaas">
                 Quem somos
               </p>
 
-              <div className="flex flex-col mb-8">
+              <div className="flex flex-col mb-5 sm:mb-8">
                 <h2 className="text-[clamp(1.8rem,3vw,2.5rem)] uppercase font-bold tracking-tight leading-[1.02] text-[#eaeaea] font-familjen">
                   <HoverBlur>Montabox</HoverBlur>
                 </h2>
@@ -235,14 +234,14 @@ export default function WorkAndServices({onPreloadNext}) {
                 />
               </div>
 
-              <div className="mt-8 mb-8 h-px bg-[#75706f]/20 w-full" />
+              <div className="mt-5 mb-5 sm:mt-8 sm:mb-8 h-px bg-[#75706f]/20 w-full" />
 
-              <p className="font-light text-[0.95rem] leading-[1.85] text-[#acaba9] mb-10 font-neuehaas">
+              <p className="font-light text-[0.78rem] sm:text-[0.85rem] leading-[1.55] sm:leading-[1.85] text-[#acaba9] mb-6 sm:mb-10 font-neuehaas">
                 Especializada em projetos grandes, residenciais e comerciais, entregamos soluções que unem estética
                 refinada e engenharia de alta performance.
               </p>
 
-              <div className="grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6">
                 <div className="flex flex-col gap-1">
                   <span className="text-[clamp(1.2rem,1.5vw,1.8rem)] font-bold tracking-tight text-[#eaeaea] font-familjen">
                     35+
@@ -261,12 +260,12 @@ export default function WorkAndServices({onPreloadNext}) {
                 </div>
               </div>
 
-              <div className="mt-16">
+              <div className="mt-8 sm:mt-16">
                 <BlurTextReveal
                   text="Principais projetos"
                   animationType="chars"
                   stagger={0.05}
-                  className="font-familjen text-xl md:text-2xl font-bold tracking-tighter text-white uppercase"
+                  className="font-familjen text-lg sm:text-xl md:text-2xl font-bold tracking-tighter text-white uppercase"
                 />
               </div>
             </div>
@@ -276,8 +275,8 @@ export default function WorkAndServices({onPreloadNext}) {
             <div key={i} className={blockClass}>
               <div
                 ref={(el) => (cardInnerRefs.current[i + 1] = el)}
-                className="flex flex-col items-center w-full will-change-transform">
-                <div className="relative w-[95%] aspect-[640/439] group overflow-hidden bg-zinc-900 border border-white/5 rounded-[5px]">
+                className="flex flex-col items-center w-full will-change-transform px-2 sm:px-0">
+                <div className="relative w-full sm:w-[95%] aspect-[640/439] group overflow-hidden bg-zinc-900 border border-white/5 rounded-[5px]">
                   <Image
                     src={img.src}
                     alt={img.alt}
@@ -287,7 +286,7 @@ export default function WorkAndServices({onPreloadNext}) {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-40" />
                 </div>
 
-                <div className="mt-6 w-[95%] text-left">
+                <div className="mt-4 sm:mt-6 w-full sm:w-[95%] text-left">
                   <span className="block text-[8px] uppercase tracking-[0.25em] text-white/40 mb-1 font-neuehaas font-bold">
                     {img.year} — Obra
                   </span>
@@ -305,8 +304,8 @@ export default function WorkAndServices({onPreloadNext}) {
           <div className={blockClass}>
             <div
               ref={(el) => (cardInnerRefs.current[IMAGES.length + 1] = el)}
-              className="flex flex-col items-center w-full will-change-transform">
-              <div className="relative w-[95%] aspect-[640/439] flex flex-col justify-center items-center text-center bg-transparent">
+              className="flex flex-col items-center w-full will-change-transform px-2 sm:px-0">
+              <div className="relative w-full sm:w-[95%] aspect-[640/439] flex flex-col justify-center items-center text-center bg-transparent px-3 sm:px-0">
                 <h3 className="text-xl md:text-2xl font-bold uppercase text-white font-familjen mb-4 leading-tight tracking-tight">
                   Visite nosso <br /> <span className="text-[#acaba9]">Instagram</span>
                 </h3>

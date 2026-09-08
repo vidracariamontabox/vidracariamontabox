@@ -196,7 +196,7 @@ export default function CTA({
   word1 = "Design",
   word2 = "Exclusivo.",
   description = (
-    <span className="font-bold tracking-[0.09em] text-[#eaeaea] w-full max-w-[1900px]">
+    <span className="font-bold tracking-[0.06em] sm:tracking-[0.09em] text-[#eaeaea] w-full max-w-[34rem] sm:max-w-[1900px]">
       Se você precisa de um modelo exclusivo entre em contato com nossa equipe. <br />
     </span>
   ),
@@ -215,7 +215,7 @@ export default function CTA({
   }, []);
 
   return (
-    <section className="relative w-full min-h-[60vh] bg-[#000000] flex flex-col justify-center py-20 px-6 sm:px-12 overflow-hidden select-none isolate">
+    <section className="relative w-full min-h-[72svh] sm:min-h-[60vh] bg-[#000000] flex flex-col justify-center py-16 sm:py-20 px-4 sm:px-12 overflow-hidden select-none isolate">
       <style>{`
         @keyframes marquee {
           0% { transform: translateX(0%); }
@@ -246,21 +246,21 @@ export default function CTA({
       </div>
 
       <div className="flex flex-col items-center justify-center text-center z-10 pointer-events-none w-full mb-8">
-        <h1 className="tahoe-glass-text flex flex-row items-center justify-center gap-1.5 sm:gap-4 lg:gap-6 px-1 w-full flex-wrap text-[2.8rem] xs:text-[3.2rem] sm:text-6xl md:text-7xl lg:text-8xl leading-none ">
+        <h1 className="tahoe-glass-text flex flex-col sm:flex-row items-center justify-center gap-0 sm:gap-4 lg:gap-6 px-1 w-full text-[clamp(2.35rem,13vw,3.2rem)] sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] sm:leading-none">
           <span className="font-serif italic font-medium">{word1}</span>
           <span className="font-sans font-extrabold tracking-tighter">{word2}</span>
         </h1>
       </div>
 
       <div className="flex flex-col items-center justify-center text-center z-10 order-2 px-1 w-full pointer-events-none mb-8">
-        <p className="w-full max-w-[95%] px-1 text-sm font-light leading-relaxed text-[#acaba9] sm:text-lg md:max-w-6xl">
+        <p className="w-full max-w-[21rem] sm:max-w-[95%] px-1 text-[0.8rem] sm:text-lg font-light leading-relaxed text-[#acaba9] md:max-w-6xl">
           {description}
         </p>
       </div>
 
       <div
         className={cn(
-          "z-20 pointer-events-auto flex flex-row items-center justify-center transition-all duration-1000 transform px-1",
+          "z-20 pointer-events-auto flex flex-row items-center justify-center transition-all duration-1000 transform px-1 mt-1",
           isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8",
         )}
         style={{transitionDelay: "450ms"}}>

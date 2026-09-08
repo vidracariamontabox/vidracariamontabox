@@ -82,12 +82,12 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="relative m-8 overflow-hidden rounded-3xl border-t border-white/5 bg-[#0F0F11]/10">
-      <div className="relative z-10 mx-auto max-w-7xl px-8 py-14 sm:px-12 lg:px-20">
-        <div className="grid grid-cols-1 gap-12 pb-12 md:grid-cols-3 md:gap-8 lg:gap-16">
-          <div className="flex max-w-xs flex-col space-y-4">
+    <footer className="relative m-4 sm:m-8 overflow-hidden rounded-2xl sm:rounded-3xl border-t border-white/5 bg-[#0F0F11]/10">
+      <div className="relative z-10 mx-auto max-w-7xl px-5 py-10 sm:px-12 sm:py-14 lg:px-20">
+        <div className="grid grid-cols-1 gap-10 pb-10 sm:gap-12 sm:pb-12 md:grid-cols-3 md:gap-8 lg:gap-16">
+          <div className="flex max-w-xs flex-col space-y-3 sm:space-y-4">
             <div className="flex flex-col">
-              <span className="text-3xl font-black uppercase leading-none tracking-tight text-white">Montabox</span>
+              <span className="text-2xl sm:text-3xl font-black uppercase leading-none tracking-tight text-white">Montabox</span>
               <span className="text-sm font-light uppercase tracking-tight text-[#acaba9]">
                 Vidraçaria e Serralheria de Alumínio
               </span>
@@ -96,7 +96,7 @@ export default function Footer() {
 
           <div>
             <h2 className="mb-2 text-[0.8rem] uppercase tracking-[0.3em] text-[#858180]">Contatos</h2>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {contactLinks.map(({icon, label, href}) => (
                 <a
                   key={label}
@@ -127,8 +127,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-6 border-t border-white/5 pt-8 md:flex-row">
-          <div className="flex items-center gap-4">
+        <div className="mt-10 flex flex-col items-start justify-between gap-5 border-t border-white/5 pt-6 sm:mt-12 sm:items-center sm:gap-6 md:flex-row md:pt-8">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <span className="text-[0.6rem] uppercase tracking-[0.2em] text-[#858180]">© {currentYear} Montabox</span>
             <span className="h-1 w-1 rounded-full bg-white/10" />
             <span className="text-[0.6rem] uppercase tracking-[0.2em] text-[#858180]">Vidraçaria e Serralheria</span>

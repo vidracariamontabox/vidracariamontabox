@@ -57,8 +57,8 @@ function FAQItem({item, index, isOpen, onToggle}) {
         aria-controls={panelId}
         aria-expanded={isOpen}
         onClick={onToggle}
-        className="relative z-10 flex w-full items-center justify-between gap-6 px-6 py-5 text-left">
-        <span className="text-[0.92rem] text-[#eaeaea] pr-4">{item.question}</span>
+        className="relative z-10 flex w-full items-center justify-between gap-3 sm:gap-6 px-4 sm:px-6 py-4 sm:py-5 text-left">
+        <span className="pr-2 sm:pr-4 text-[0.84rem] sm:text-[0.92rem] leading-snug text-[#eaeaea]">{item.question}</span>
         <motion.span
           animate={{rotate: isOpen ? 45 : 0}}
           transition={{duration: 0.3, ease: "easeOut"}}
@@ -78,7 +78,7 @@ function FAQItem({item, index, isOpen, onToggle}) {
         animate={{height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0}}
         transition={{duration: 0.35, ease: "easeInOut"}}
         className="relative z-10 overflow-hidden">
-        <p className="px-6 pb-5 text-[0.85rem] leading-relaxed text-[#acaba9]">{item.answer}</p>
+        <p className="px-4 sm:px-6 pb-4 sm:pb-5 text-[0.8rem] sm:text-[0.85rem] leading-relaxed text-[#acaba9]">{item.answer}</p>
       </motion.div>
     </motion.div>
   );
@@ -120,7 +120,7 @@ export default function FAQ({faqs, onPreloadNext}) {
   };
 
   return (
-    <section ref={sectionRef} id="faq" className="relative w-full overflow-hidden bg-[#080808] px-6 sm:px-10 py-24">
+    <section ref={sectionRef} id="faq" className="relative w-full overflow-hidden bg-[#080808] px-4 sm:px-10 py-16 sm:py-24">
       <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(jsonLd)}} />
 
       <FAQParticles />
@@ -152,11 +152,11 @@ export default function FAQ({faqs, onPreloadNext}) {
             text="Perguntas frequentes (revisar)"
             animationType="words"
             stagger={0.12}
-            className="mt-2 font-light text-2xl sm:text-3xl text-[#eaeaea]"
+            className="mt-2 font-light text-[1.65rem] sm:text-2xl md:text-3xl text-[#eaeaea]"
           />
         </h2>
 
-        <div className="mt-10 flex flex-col gap-3">
+        <div className="mt-8 sm:mt-10 flex flex-col gap-3">
           {faqs.map((item, i) => (
             <FAQItem key={item.id} item={item} index={i} isOpen={openId === item.id} onToggle={() => toggle(item.id)} />
           ))}
