@@ -18,7 +18,7 @@ function CursiveAltoPadrao({play}) {
   );
 }
 
-export default function Services({ isRevealed }) {
+export default function Services({isRevealed}) {
   const [isHeaderReady, setIsHeaderReady] = useState(false);
 
   useEffect(() => {
@@ -28,7 +28,6 @@ export default function Services({ isRevealed }) {
     }
 
     if (isRevealed) {
-
       setIsHeaderReady(true);
     } else {
       setIsHeaderReady(false);
@@ -58,7 +57,7 @@ export default function Services({ isRevealed }) {
           {services.map((service, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 1, y: 0 }}
+              initial={{opacity: 1, y: 0}}
               whileHover={{x: 6}}
               className="group relative overflow-hidden cursor-default">
               <span className="font-familjen text-[clamp(2.15rem,10.5vw,4rem)] sm:text-[clamp(2.8rem,7vw,7rem)] font-bold tracking-[-0.03em] sm:tracking-tight leading-[1.02] text-[#eaeaea] group-hover:text-[#acaba9] transition-colors duration-300 select-none uppercase max-w-full">
@@ -75,14 +74,14 @@ export default function Services({ isRevealed }) {
           ))}
         </div>
 
-        <div className="mt-12 sm:mt-20 flex items-center justify-start">
+        <div className="mt-12 sm:mt-20 flex items-center justify-start translate-y-[1cm]">
           <a
             href="https://wa.me/5516981984000"
             target="_blank"
             rel="noreferrer"
             className="group inline-flex items-center gap-3 text-[0.62rem] sm:text-[0.72rem] font-light tracking-[0.18em] sm:tracking-widest uppercase text-[#acaba9] hover:text-[#eaeaea] transition-colors duration-300 font-neuehaas">
             <span>Solicite seu orçamento</span>
-            <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+            <span className="group-hover:translate-x-1 transition-transform duration-300">→ </span>
           </a>
         </div>
       </div>
