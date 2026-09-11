@@ -87,7 +87,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-10 pb-10 sm:gap-12 sm:pb-12 md:grid-cols-3 md:gap-8 lg:gap-16">
           <div className="flex max-w-xs flex-col space-y-3 sm:space-y-4">
             <div className="flex flex-col">
-              <span className="text-2xl sm:text-3xl font-black uppercase leading-none tracking-tight text-white">Montabox</span>
+              <span className="text-[1.65rem] sm:text-[2.0625rem] font-black uppercase leading-none tracking-tight text-white">Montabox</span>
               <span className="text-sm font-light uppercase tracking-tight text-[#acaba9]">
                 Vidraçaria e Serralheria de Alumínio
               </span>
@@ -95,7 +95,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h2 className="mb-2 text-[0.8rem] uppercase tracking-[0.3em] text-[#858180]">Contatos</h2>
+            <h2 className="mb-2 text-[0.6rem] uppercase tracking-[0.3em] text-[#858180]">Contatos</h2>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {contactLinks.map(({icon, label, href}) => (
                 <a
@@ -112,7 +112,7 @@ export default function Footer() {
           </div>
 
           <div className="text-[#d1d1d1]">
-            <h2 className="mb-2 text-[0.8rem] uppercase tracking-[0.3em] text-[#858180]">Endereço</h2>
+            <h2 className="mb-2 text-[0.6rem] uppercase tracking-[0.3em] text-[#858180]">Endereço</h2>
             <p className="text-[0.7rem] font-light uppercase tracking-widest text-[#acaba9] transition-colors duration-300">
               R. Virgílio Pedro Ribeiro, 70 - Planalto Itália, Jaboticabal - SP
               <br />

@@ -246,7 +246,7 @@ export default function CTA({
       </div>
 
       <div className="flex flex-col items-center justify-center text-center z-10 pointer-events-none w-full mb-8">
-        <h1 className="tahoe-glass-text flex flex-col sm:flex-row items-center justify-center gap-0 sm:gap-4 lg:gap-6 px-1 w-full text-[clamp(2.35rem,13vw,3.2rem)] sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] sm:leading-none">
+        <h1 className="tahoe-glass-text flex flex-col sm:flex-row items-center justify-center gap-0 sm:gap-4 lg:gap-6 px-1 w-full text-[clamp(2.82rem,15.6vw,3.84rem)] sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] sm:leading-none">
           <span className="font-serif italic font-medium">{word1}</span>
           <span className="font-sans font-extrabold tracking-tighter">{word2}</span>
         </h1>
@@ -260,7 +260,7 @@ export default function CTA({
 
       <div
         className={cn(
-          "z-20 pointer-events-auto flex flex-row items-center justify-center transition-all duration-1000 transform px-1 mt-1",
+          "z-20 pointer-events-auto flex flex-row items-center justify-center transition-all duration-1000 transform px-1 mt-1 mb-5 sm:mb-0",
           isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8",
         )}
         style={{transitionDelay: "450ms"}}>
@@ -275,7 +275,7 @@ export default function CTA({
 
       <div
         className={cn(
-          "hidden md:flex absolute bottom-8 left-0 right-0 w-full z-10 pointer-events-auto flex-col items-center justify-center gap-4 transition-all duration-1000 transform",
+          "flex absolute bottom-4 sm:bottom-8 left-0 right-0 w-full z-10 pointer-events-auto flex-col items-center justify-center gap-4 transition-all duration-1000 transform",
           isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8",
         )}
         style={{transitionDelay: "600ms"}}>
