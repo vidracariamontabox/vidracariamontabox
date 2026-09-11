@@ -10,12 +10,11 @@ function cn(...classes) {
 const PARTNER_LOGOS = [
   {src: "/images/Logo-1-biofarm.webp", alt: "Biofarm"},
   {src: "/images/Logo-2-favaro.webp", alt: "Favaro"},
-  {src: "/images/Logo-3-grupoandremaria.webp", alt: "Grupo Andre Maria"},
+  {src: "/images/Logo-3-athenas.webp", alt: "Athenas"},
   {src: "/images/Logo-4-ibis.webp", alt: "Ibis"},
-  {src: "/images/cta-1-artemper.webp", alt: "Artemper"},
-  {src: "/images/Logo-5-oxiquimica.webp", alt: "Oxiquimica"},
-  {src: "/images/Logo-6-tenesse.webp", alt: "Tenesse"},
-  {src: "/images/cta-3-athenas.webp", alt: "Athenas"},
+  {src: "/images/Logo-5-oxiquimica2.webp", alt: "Oxiquimica"},
+  {src: "/images/Logo-6-tenesse2.webp", alt: "Tenesse"},
+  {src: "/images/Logo-7-artemper.webp", alt: "Artemper"},
 ];
 
 function createPixel(ctx, canvas, x, y, color, baseSpeed, delay) {
@@ -196,7 +195,7 @@ export default function CTA({
   word1 = "Design",
   word2 = "Exclusivo.",
   description = (
-    <span className="font-bold tracking-[0.06em] sm:tracking-[0.09em] text-[#eaeaea] w-full max-w-[34rem] sm:max-w-[1900px]">
+    <span className="font-semi-bold tracking-[0.11em] uppercase sm:tracking-[0.09em] text-[#eaeaea] w-full max-w-[34rem] sm:max-w-[1900px]">
       Se você precisa de um modelo exclusivo entre em contato com nossa equipe. <br />
     </span>
   ),

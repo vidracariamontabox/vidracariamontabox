@@ -62,14 +62,14 @@ export const TestimonialsData = [
       "Atenderam dentro do prazo, super atenciosos e rápidos para realizar serviço.",
   },
 
-  {
-    companyName: "Acabamento",
-    clientName: "Andre de Souza Maria",
-    clientDeg: "Grupo André Maria",
-    clientImage: "/images/Logo-3-grupoandremaria.webp",
-    quoteMessage:
-      "Coletar depoimento real para o site.",
-  },
+  // {
+  //   companyName: "Acabamento",
+  //   clientName: "Andre de Souza Maria",
+  //   clientDeg: "Grupo André Maria",
+  //   clientImage: "/images/Logo-3-grupoandremaria.webp",
+  //   quoteMessage:
+  //     "Coletar depoimento real para o site.",
+  // },
 
   {
     companyName: "Esquadrias",
@@ -192,7 +192,7 @@ export const TestimonialsData = [
     companyName: "Excelência",
     clientName: "Naur",
     clientDeg: "Biofarm Tecnologia em Veterinária",
-    clientImage: "/images/Logo-1-biofarm.webp",
+    clientImage: "/images/Logo-1-biofarm2.webp",
     quoteMessage:
       "OOOO RONALDO ORÇA LÁ PRA MIMMM.",
   },

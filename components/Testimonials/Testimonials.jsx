@@ -13,7 +13,6 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
-
   const paginate = useCallback((newDirection) => {
     setDirection(newDirection);
     setActiveIndex((prevIndex) => {
@@ -26,7 +25,7 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
 
   const handleCompanyClick = useCallback(
     (companyName) => {
-      const targetIndex = TestimonialsData.findIndex(item => item.companyName === companyName);
+      const targetIndex = TestimonialsData.findIndex((item) => item.companyName === companyName);
       if (targetIndex !== -1 && targetIndex !== activeIndex) {
         setDirection(targetIndex > activeIndex ? 1 : -1);
         setActiveIndex(targetIndex);
@@ -34,7 +33,6 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
     },
     [activeIndex],
   );
-
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -85,7 +83,6 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
     <section ref={sectionRef} id="testimonials" className={`testimonials-section ${customClass}`.trim()}>
       <div className="testimonials-section__container">
         <div className="testimonials-section__header">
-
           <BlurTextReveal
             as="h2"
             text="História.dos.clientes"
@@ -95,7 +92,6 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
           />
 
           <div className="testimonials-section__introWrap">
-
             <p className="testimonials-section__intro">
               Pequenos ou grandes projetos.
               <br /> A qualidade é a mesma.
@@ -162,9 +158,9 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
                   animate="center"
                   exit="exit"
                   transition={{
-                    x: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
-                    opacity: { duration: 0.4 },
-                    filter: { duration: 0.4 }
+                    x: {duration: 0.6, ease: [0.16, 1, 0.3, 1]},
+                    opacity: {duration: 0.4},
+                    filter: {duration: 0.4},
                   }}
                   drag="x"
                   dragConstraints={{left: 0, right: 0}}
