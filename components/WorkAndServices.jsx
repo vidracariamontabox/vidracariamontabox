@@ -143,6 +143,28 @@ export default function WorkAndServices({onPreloadNext}) {
               setIsServicesRevealed(isRevealed);
             }
           },
+          snap: {
+            snapTo: (rawProgress) => {
+              const phaseStart = 0.2 / 4.2;
+              const phaseEnd = 3.2 / 4.2;
+              if (rawProgress < phaseStart || rawProgress > phaseEnd) return rawProgress;
+
+              const points = cardMetrics
+                .map((m) => {
+                  if (!m) return null;
+                  const targetX = viewportWidth / 2 - (m.left + m.width / 2);
+                  const localT = -targetX / scrollAmount;
+                  return phaseStart + localT * (phaseEnd - phaseStart);
+                })
+                .filter((v) => v !== null);
+
+              return points.reduce((closest, p) =>
+                Math.abs(p - rawProgress) < Math.abs(closest - rawProgress) ? p : closest,
+              );
+            },
+            duration: {min: 0.15, max: 0.4},
+            ease: "power1.inOut",
+          },
         },
       });
 
@@ -196,7 +218,8 @@ export default function WorkAndServices({onPreloadNext}) {
     {scope: containerRef},
   );
 
-    const blockClass = "flex-shrink-0 w-[calc(100vw-2rem)] sm:w-[calc(100vw-3rem)] md:w-[45vw] h-full flex items-center justify-center px-0 sm:px-6 md:px-10 border-r border-white/10";
+  const blockClass =
+    "flex-shrink-0 w-[calc(100vw-2rem)] sm:w-[calc(100vw-3rem)] md:w-[45vw] h-full flex items-center justify-center px-0 sm:px-6 md:px-10 border-r border-white/10";
 
   return (
     <section
@@ -293,7 +316,7 @@ export default function WorkAndServices({onPreloadNext}) {
                   <h3 className="text-sm md:text-base font-bold uppercase text-white font-familjen leading-tight tracking-tight mb-2">
                     {img.title}
                   </h3>
-                  <p className="text-[10px] md:text-[14px] font-neuehaas text-[#75706f] leading-relaxed max-w-[90%]">
+                  <p className="text-[15px] md:text-[14px] font-neuehaas text-[#75706f] leading-relaxed max-w-[90%]">
                     {img.desc}
                   </p>
                 </div>

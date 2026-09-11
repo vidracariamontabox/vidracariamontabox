@@ -5,13 +5,11 @@ import {Canvas, useFrame, useThree} from "@react-three/fiber";
 import * as THREE from "three";
 import GlowCursor from "@/components/GlowCursor";
 
-
 const CUBE_SIZE = 1.0;
 const GAP = 0.05;
 const STEP = CUBE_SIZE + GAP;
 const XY_OFFSET_MAX = STEP * 0.025;
 const SEED = 7331;
-
 
 function makeRng(seed) {
   let s = seed;
@@ -21,7 +19,6 @@ function makeRng(seed) {
   };
 }
 
-
 function CubeGrid() {
   const {viewport} = useThree();
   const cubesRef = useRef([]);
@@ -29,7 +26,6 @@ function CubeGrid() {
 
   const cols = Math.ceil(viewport.width / STEP) + 6;
   const rows = Math.ceil(viewport.height / STEP) + 6;
-
 
   const {geometries, materials} = useMemo(() => {
     if (typeof window === "undefined") return {geometries: null, materials: null};
@@ -142,7 +138,6 @@ function CubeGrid() {
   );
 }
 
-
 function CameraRig() {
   const {camera} = useThree();
   useEffect(() => {
@@ -172,7 +167,6 @@ function Scene() {
     </>
   );
 }
-
 
 export default function Hero() {
   const [mouse, setMouse] = useState({x: -999, y: -999});
@@ -231,7 +225,6 @@ export default function Hero() {
         </Suspense>
       </Canvas>
 
-
       <div className="absolute inset-0 z-[3] pointer-events-none opacity-70" aria-hidden="true">
         <svg className="h-full w-full" viewBox="0 0 1440 900" preserveAspectRatio="none" fill="none">
           <path d="M0 690H1440" stroke="rgba(190,190,190,0.12)" strokeWidth="1" />
@@ -244,11 +237,10 @@ export default function Hero() {
         </svg>
       </div>
 
-      <div className="absolute top-[clamp(5.5rem,16vh,8rem)] left-4 right-4 sm:left-[clamp(1.5rem,3vw,3rem)] sm:right-auto z-10 pointer-events-none flex flex-col gap-6 sm:gap-[2.75rem] max-w-[min(42rem,90vw)] mt-0 sm:mt-20">
+      <div className="absolute top-1/2 left-4 right-auto -translate-y-1/2 z-10 pointer-events-none flex flex-col items-start text-left gap-6 sm:left-[clamp(1.5rem,3vw,3rem)] sm:gap-[2.75rem] w-[calc(100%-2rem)] sm:w-auto max-w-[min(42rem,90vw)]">
         <h1
-          className="font-ivy-presto text-[clamp(2.8rem,12vw,4.8rem)] sm:text-[clamp(3rem,4.7vw+1.4rem,6.4rem)] font-bold tracking-[0.01em] sm:tracking-[0.03em] text-[#eaeaea] leading-[0.92] sm:leading-[0.95] m-0 max-w-[13ch] sm:max-w-none"
+          className="font-ivy-presto text-[clamp(3.3rem,12vw,4.8rem)] sm:text-[clamp(3rem,4.7vw+1.4rem,6.4rem)] font-bold tracking-[0.01em] sm:tracking-[0.03em] text-[#eaeaea] leading-[0.92] sm:leading-[0.95] m-0 max-w-[13ch] sm:max-w-none"
           style={{textShadow: "0 2px 3px rgba(0,0,0,0.72)"}}>
-
           Seu projeto é nosso projeto
         </h1>
         <p className="font-ivy-presto text-[clamp(0.95rem,3.8vw,1.1rem)] sm:text-[clamp(1.05rem,1.5vw+0.4rem,1.1rem)] font-bold tracking-[0.06em] sm:tracking-[0.08em] leading-[1.35] text-[#b7b1ab] m-0 max-w-[24rem] sm:max-w-[30rem]">
@@ -269,12 +261,12 @@ export default function Hero() {
         style={{background: "radial-gradient(ellipse 55% 60% at 50% 50%, transparent 0%, rgba(8,8,8,0.4) 100%)"}}
       />
 
-      <div className="absolute bottom-5 left-4 sm:bottom-[clamp(1.5rem,4vh,3rem)] sm:left-[clamp(1.5rem,3vw,3rem)] z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.48rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#8d8d8d] uppercase max-w-[55vw]">
+      <div className="absolute bottom-[clamp(3.3rem,16.5vh,7.6rem)] left-4 sm:bottom-[clamp(3rem,8vh,6rem)] sm:left-[clamp(1.5rem,3vw,3rem)] z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.63rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#8d8d8d] uppercase w-max max-w-[90vw] whitespace-nowrap">
         <span className="h-px w-8 bg-[#8d8d8d]/60" />
         <span>Vidraçaria · Serralheria · Alto padrão</span>
       </div>
 
-      <div className="absolute bottom-5 right-4 sm:bottom-[clamp(1.5rem,4vh,3rem)] sm:right-[clamp(1.5rem,3vw,3rem)] z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.48rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#8d8d8d] uppercase max-w-[38vw] justify-end text-right">
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 sm:bottom-[clamp(1.5rem,4vh,3rem)] sm:left-auto sm:right-[clamp(1.5rem,3vw,3rem)] sm:translate-x-0 z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.48rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#8d8d8d] uppercase max-w-[38vw] justify-end text-right">
         <span>Scroll para explorar</span>
         <span className="h-7 sm:h-10 w-px bg-[#b7b1ab]/60" />
       </div>
