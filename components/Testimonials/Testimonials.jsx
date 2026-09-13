@@ -12,6 +12,7 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
   const nextPreloadTriggeredRef = useRef(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [resetKey, setResetKey] = useState(0);
 
   const paginate = useCallback((newDirection) => {
     setDirection(newDirection);
@@ -32,6 +33,14 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
       }
     },
     [activeIndex],
+  );
+
+  const handlePaginate = useCallback(
+    (dir) => {
+      setResetKey((k) => k + 1);
+      paginate(dir);
+    },
+    [paginate],
   );
 
   useEffect(() => {
@@ -57,7 +66,7 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
       paginate(1);
     }, 8000);
     return () => clearInterval(timer);
-  }, [paginate]);
+  }, [paginate, resetKey]);
 
   const variants = {
     enter: (direction) => ({
@@ -133,14 +142,14 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
               <button
                 type="button"
                 className="custom-arrow left"
-                onClick={() => paginate(-1)}
+                onClick={() => handlePaginate(-1)}
                 aria-label="Previous testimonial">
                 <span className="arrow-icon">←</span>
               </button>
               <button
                 type="button"
                 className="custom-arrow right"
-                onClick={() => paginate(1)}
+                onClick={() => handlePaginate(1)}
                 aria-label="Next testimonial">
                 <span className="arrow-icon">→</span>
               </button>
@@ -168,7 +177,7 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
                   onDragEnd={(e, {offset}) => {
                     const swipe = Math.abs(offset.x) > 50;
                     if (swipe) {
-                      paginate(offset.x > 0 ? -1 : 1);
+                      handlePaginate(offset.x > 0 ? -1 : 1);
                     }
                   }}
                   className="w-full">
