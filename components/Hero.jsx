@@ -1,7 +1,7 @@
 "use client";
 
 import {Suspense, useEffect, useMemo, useRef, useState} from "react";
-import {Canvas, useFrame, useThree} from "@react-three/fiber";
+import {Canvas, useFrame, useThree, useLoader} from "@react-three/fiber";
 import * as THREE from "three";
 import GlowCursor from "@/components/GlowCursor";
 
@@ -23,28 +23,47 @@ function CubeGrid() {
   const {viewport} = useThree();
   const cubesRef = useRef([]);
   const animatedCubesRef = useRef([]);
+  const matcapTexture = useLoader(THREE.TextureLoader, "/images/matcap-steel.png");
 
   const cols = Math.ceil(viewport.width / STEP) + 6;
   const rows = Math.ceil(viewport.height / STEP) + 6;
 
   const {geometries, materials} = useMemo(() => {
     if (typeof window === "undefined") return {geometries: null, materials: null};
+    if (!matcapTexture) return {geometries: null, materials: null};
 
     const boxGeo = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
     const edgeGeo = new THREE.EdgesGeometry(boxGeo);
 
-    const matDark = new THREE.MeshStandardMaterial({color: "#000000", metalness: 0.92, roughness: 0.18});
-    const matMid = new THREE.MeshStandardMaterial({color: "#000000", metalness: 0.92, roughness: 0.18});
-    const matLighter = new THREE.MeshStandardMaterial({color: "#000000", metalness: 0.92, roughness: 0.18});
+    const matHigh = new THREE.MeshMatcapMaterial({
+      matcap: matcapTexture,
+      color: "#3a3a3a", // cinza médio — volume
+    });
+    const matMid = new THREE.MeshMatcapMaterial({
+      matcap: matcapTexture,
+      color: "#161616", // carvão
+    });
+    const matDark = new THREE.MeshMatcapMaterial({
+      matcap: matcapTexture,
+      color: "#080808", // quase preto
+    });
 
-    const edgeMatDark = new THREE.LineBasicMaterial({color: "#464443", transparent: true, opacity: 0.8});
-    const edgeMatLight = new THREE.LineBasicMaterial({color: "#4a5568", transparent: true, opacity: 0.95});
+    const edgeMatDark = new THREE.LineBasicMaterial({
+      color: "#2a2a2a",
+      transparent: true,
+      opacity: 0.55,
+    });
+    const edgeMatLight = new THREE.LineBasicMaterial({
+      color: "#4a4a4a",
+      transparent: true,
+      opacity: 0.75,
+    });
 
     return {
       geometries: {box: boxGeo, edge: edgeGeo},
-      materials: {dark: matDark, mid: matMid, lighter: matLighter, edgeDark: edgeMatDark, edgeLight: edgeMatLight},
+      materials: {high: matHigh, mid: matMid, dark: matDark, edgeDark: edgeMatDark, edgeLight: edgeMatLight},
     };
-  }, []);
+  }, [matcapTexture]);
 
   useEffect(() => {
     const cubes = cubesRef.current.filter(Boolean);
@@ -104,13 +123,24 @@ function CubeGrid() {
         const rotY = (rng() - 0.5) * 0.04;
         const scale = 0.95 + rng() * 0.1;
 
-        const rm = rng();
-        let mat;
-        if (rm > 0.65) mat = materials.dark;
-        else if (rm > 0.3) mat = materials.mid;
-        else mat = materials.lighter;
+        const nx = col / (cols - 1);
+        const ny = row / (rows - 1);
 
-        const edgeMat = rng() < 0.3 ? materials.edgeLight : materials.edgeDark;
+        // Zonas: superior esquerdo, superior direito, inferior centro
+        const topLeft = Math.exp(-((nx - 0.0) ** 2 / 0.04 + (ny - 0.0) ** 2 / 0.05));
+        const topRight = Math.exp(-((nx - 1.0) ** 2 / 0.04 + (ny - 0.0) ** 2 / 0.05)) * 0.7;
+        const bottomCenter = Math.exp(-((nx - 0.5) ** 2 / 0.04 + (ny - 1.0) ** 2 / 0.05)) * 0.6;
+
+        const influence = Math.min(topLeft + topRight + bottomCenter, 1.0);
+        const noise = (rng() - 0.5) * 0.06;
+        const brightness = Math.max(0, influence + noise);
+
+        let mat;
+        if (brightness > 0.75) mat = materials.high;
+        else if (brightness > 0.4) mat = materials.mid;
+        else mat = materials.dark;
+
+        const edgeMat = brightness > 0.4 ? materials.edgeLight : materials.edgeDark;
         data.push({x: baseX + dX, y: baseY + dY, z, rotX, rotY, rotZ: 0, scale, mat, edgeMat});
       }
     }
@@ -148,24 +178,7 @@ function CameraRig() {
 }
 
 function Scene() {
-  const mainLightTarget = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    return new THREE.Object3D();
-  }, []);
-
-  useEffect(() => {
-    if (mainLightTarget) mainLightTarget.position.set(0, 0, 0);
-  }, [mainLightTarget]);
-
-  return (
-    <>
-      <ambientLight intensity={0.5} color="#8899bb" />
-      {mainLightTarget && (
-        <directionalLight position={[8, 5, 10]} intensity={1.2} color="#ffffff" target={mainLightTarget} />
-      )}
-      <directionalLight position={[-6, 2, -8]} intensity={0.3} color="#aabbcc" />
-    </>
-  );
+  return <ambientLight intensity={0.35} color="#e8e8e8" />;
 }
 
 export default function Hero() {
