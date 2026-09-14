@@ -1,7 +1,7 @@
 "use client";
 
-import {useEffect, useRef, useState} from "react";
-import {useFrame} from "@react-three/fiber";
+import { useEffect, useRef, useState } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 function createGlowTexture() {
@@ -14,9 +14,10 @@ function createGlowTexture() {
   const ctx = canvas.getContext("2d");
 
   const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, "rgba(0, 128, 0, 1.0)");
-  gradient.addColorStop(0.4, "rgba(0, 128, 0, 0.9)");
-  gradient.addColorStop(1, "rgba(0, 128, 0, 0)");
+  gradient.addColorStop(0, "rgba(0, 255, 60, 1.0)");
+  gradient.addColorStop(0.2, "rgba(0, 200, 40, 0)");
+  gradient.addColorStop(0.5, "rgba(0, 120, 20, 0)");
+  gradient.addColorStop(1, "rgba(0, 50, 0, 0)");
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
@@ -24,9 +25,9 @@ function createGlowTexture() {
   return new THREE.CanvasTexture(canvas);
 }
 
-export default function GlowCursor({mousePos}) {
+export default function GlowCursor({ mousePos }) {
   const meshRef = useRef(null);
-  const targetRef = useRef({x: 0, y: 0});
+  const targetRef = useRef({ x: 0, y: 0 });
   const [glowTexture, setGlowTexture] = useState(null);
 
   useEffect(() => {
@@ -60,10 +61,13 @@ export default function GlowCursor({mousePos}) {
 
   if (!glowTexture) return null;
 
+  return null; // Componente desativado a pedido do usuário
+  /*
   return (
-    <mesh ref={meshRef} position={[0, 0, -5]} visible={false}>
-      <planeGeometry args={[8.4, 8.4]} />
+    <mesh ref={meshRef} position={[0, 0, -3.5]} visible={false}>
+      <planeGeometry args={[12, 12]} />
       <meshBasicMaterial map={glowTexture} transparent opacity={1} depthWrite={false} fog={false} />
     </mesh>
   );
+  */
 }
