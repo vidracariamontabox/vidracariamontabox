@@ -48,8 +48,8 @@ function CubeGrid({ cursorWorldPos }) {
       const t = i / (N - 1);
       const matcap = t > 0.35 ? matcapLight : matcapDark;
       const color = new THREE.Color().lerpColors(
-        new THREE.Color("#000000"),
-        new THREE.Color("#b8b8b8"),
+        new THREE.Color("#03060a"),
+        new THREE.Color("#b4bac2"),
         t
       );
       return new THREE.MeshMatcapMaterial({ matcap, color });
@@ -94,18 +94,18 @@ function CubeGrid({ cursorWorldPos }) {
         // 2) Superior direito — núcleo no canto
         const topRightCore = Math.exp(
           -((nx - 1.0) ** 2 / 0.11 + (ny - 1.0) ** 2 / 0.20)
-        ) * 0.9;
+        ) * 0.45;
 
         // 2b) Faixa direita descendo até o fundo sem corte
         const stripeWidth = 0.045 * (0.020 + 0.6 * ny); // ny=1 topo: 0.035 | ny=0 base: 0.0105
         const topRightStripe = Math.exp(
           -((nx - 0.86) ** 2 / stripeWidth)
-        ) * 0.45;
+        ) * 0.12;
 
         // 3) Inferior centro — meia-lua centralizada
         const bottomMoon = Math.exp(
-          -((nx - 0.5) ** 2 / 0.04 + (ny - 0.0) ** 2 / 0.15)
-        ) * 0.85;
+          -((nx - 0.5) ** 2 / 0.04 + (ny - 0.0) ** 2 / 0.06)
+        ) * 0.65;
         const centerDarken = Math.exp(
           -((nx - 0.32) ** 2 / 0.09 + (ny - 0.48) ** 2 / 0.11)
         ) * 0.15;
