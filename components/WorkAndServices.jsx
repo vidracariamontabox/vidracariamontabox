@@ -298,8 +298,8 @@ export default function WorkAndServices({onPreloadNext}) {
             <div key={i} className={blockClass}>
               <div
                 ref={(el) => (cardInnerRefs.current[i + 1] = el)}
-                className="flex flex-col items-center w-full will-change-transform px-2 sm:px-0 ">
-                <div className="relative w-full sm:w-[95%] aspect-[4/5] md:aspect-auto group overflow-hidden bg-zinc-900 border border-white/5 rounded-[5px]">
+                className="flex flex-col items-center w-full will-change-transform px-2 sm:px-0">
+                <div className="relative w-full sm:w-[95%] aspect-[640/439] group overflow-hidden bg-zinc-900 border border-white/5 rounded-[5px]">
                   <Image
                     src={img.src}
                     alt={img.alt}
@@ -309,7 +309,7 @@ export default function WorkAndServices({onPreloadNext}) {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-40" />
                 </div>
 
-                <div className="mt-4 sm:mt-6 w-full sm:w-[95%] text-left min-h-[120px]">
+                <div className="mt-4 sm:mt-6 w-full sm:w-[95%] text-left">
                   <span className="block text-[8px] uppercase tracking-[0.25em] text-white/40 mb-1 font-neuehaas font-bold">
                     {img.year} — Obra
                   </span>
