@@ -1,9 +1,9 @@
 "use client";
 
-import {motion} from "framer-motion";
+import { motion } from "framer-motion";
 
 const navVariants = {
-  hidden: {opacity: 0, y: -10},
+  hidden: { opacity: 0, y: -10 },
   visible: {
     opacity: 1,
     y: 0,
@@ -18,7 +18,7 @@ const navVariants = {
 };
 
 const itemVariants = {
-  hidden: {opacity: 0, y: -8},
+  hidden: { opacity: 0, y: -8 },
   visible: {
     opacity: 1,
     y: 0,
@@ -46,15 +46,15 @@ export default function Navbar() {
         variants={itemVariants}
         href="#"
         className="text-sm font-light tracking-widest uppercase text-[#acaba9] hover:text-[#eaeaea] transition-colors duration-300">
-        Montabox
+        Montabox (em desenvolvimento)
       </motion.a>
 
       <motion.a
         variants={itemVariants}
         href="https://wa.me/5516981984000"
         target="_blank"
-        whileHover={{scale: 1.02}}
-        whileTap={{scale: 0.98}}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         className={[
           "text-[0.72rem] font-light tracking-widest uppercase",
           "border border-[#acaba9]/50 text-[#eaeaea]",

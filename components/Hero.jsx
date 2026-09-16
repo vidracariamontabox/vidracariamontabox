@@ -49,8 +49,8 @@ function CubeGrid({ cursorWorldPos }) {
   const { viewport } = useThree();
   const cubesRef = useRef([]);
   const animatedCubesRef = useRef([]);
-  const matcapDark = useLoader(THREE.TextureLoader, "/images/matcap-steel.png");
-  const matcapLight = useLoader(THREE.TextureLoader, "/images/matcap-aluminium.png");
+  const matcapDark = useLoader(THREE.TextureLoader, "/images/matcap_reflection prata 1.png");
+  const matcapLight = useLoader(THREE.TextureLoader, "/images/matcap_reflection prata 1.png");
 
   const cols = Math.ceil(viewport.width / STEP) + 6;
   const rows = Math.ceil(viewport.height / STEP) + 6;
@@ -65,10 +65,10 @@ function CubeGrid({ cursorWorldPos }) {
     const N = 32;
     const gradientMats = Array.from({ length: N }, (_, i) => {
       const t = i / (N - 1);
-      const matcap = t > 0.35 ? matcapLight : matcapDark;
+      const matcap = t > 0.55 ? matcapLight : matcapDark;
       const color = new THREE.Color().lerpColors(
-        new THREE.Color("#03060a"),
-        new THREE.Color("#b4bac2"),
+        new THREE.Color("#616161"),
+        new THREE.Color("#b8b8b8"),
         t
       );
       return new THREE.MeshMatcapMaterial({ matcap, color });
