@@ -19,6 +19,25 @@ function makeRng(seed) {
   };
 }
 
+function makeValueNoise(ctrlX, ctrlY, rng) {
+  const grid = [];
+  for (let y = 0; y < ctrlY; y++) {
+    grid.push(Array.from({ length: ctrlX }, () => rng()));
+  }
+  return (nx, ny) => {
+    const fx = nx * (ctrlX - 1);
+    const fy = ny * (ctrlY - 1);
+    const x0 = Math.floor(fx), x1 = Math.min(x0 + 1, ctrlX - 1);
+    const y0 = Math.floor(fy), y1 = Math.min(y0 + 1, ctrlY - 1);
+    const tx = fx - x0, ty = fy - y0;
+    const a = grid[y0][x0], b = grid[y0][x1];
+    const c = grid[y1][x0], d = grid[y1][x1];
+    const top = a + (b - a) * tx;
+    const bottom = c + (d - c) * tx;
+    return top + (bottom - top) * ty;
+  };
+}
+
 /* ─────────────────────────────────────────────
    CubeGrid com materiais individuais por cubo.
    Cada cubo recebe seu próprio clone de material
@@ -68,6 +87,8 @@ function CubeGrid({ cursorWorldPos }) {
   const cubeData = useMemo(() => {
     if (!materials) return [];
     const rng = makeRng(SEED);
+    const noiseBroad = makeValueNoise(6, 4, rng);
+    const noiseFine = makeValueNoise(16, 9, rng);
     const offsetX = ((cols - 1) * STEP) / 2;
     const offsetY = ((rows - 1) * STEP) / 2;
     const data = [];
@@ -112,9 +133,11 @@ function CubeGrid({ cursorWorldPos }) {
 
         const rawInfluence = topLeft + topRightCore + topRightStripe + bottomMoon;
         const influence = Math.min(rawInfluence, 1.0) - centerDarken;
-        const noise = (rng() - 0.5) * 0.05;
-        const brightness = Math.max(0, Math.min(1, influence + noise));
-
+        const grainBroad = noiseBroad(nx, ny);
+        const grainFine = noiseFine(nx, ny);
+        const brightness = Math.max(0, Math.min(1,
+          influence * 0.7 + grainBroad * 0.28 + grainFine * 0.10 - 0.13
+        ));
         /* ── Material compartilhado via gradiente ── */
         const N = 32;
         const matIndex = Math.round(brightness * 31);
