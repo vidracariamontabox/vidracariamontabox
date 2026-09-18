@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import GlowCursor from "@/components/GlowCursor";
 
 const CUBE_SIZE = 1.0;
@@ -45,12 +46,45 @@ function makeValueNoise(ctrlX, ctrlY, rng) {
    com base na distância ao cursor do mouse.
    ───────────────────────────────────────────── */
 
+/* ──────────────────────────────────────────────────────────────
+   CursorLight: PointLight que segue o cursor em coordenadas de mundo
+   Valores extraídos do Spline: cor #c3ff00, intensidade 5.72
+   ────────────────────────────────────────────────────────────── */
+function CursorLight({ cursorWorldPos }) {
+  const lightRef = useRef();
+
+  useFrame(() => {
+    if (!lightRef.current || !cursorWorldPos) return;
+    const active = cursorWorldPos.active;
+    // Interpola suavemente para a posição do cursor
+    lightRef.current.position.x = cursorWorldPos.x;
+    lightRef.current.position.y = cursorWorldPos.y;
+    lightRef.current.position.z = 8;
+    // Intensidade aparece/desaparece com o cursor
+    lightRef.current.intensity = active * 5.72;
+  });
+
+  return (
+    <pointLight
+      ref={lightRef}
+      color="#c3ff00"
+      intensity={0}
+      distance={28}
+      decay={2}
+      position={[0, 0, 8]}
+    />
+  );
+}
+
 function CubeGrid({ cursorWorldPos }) {
   const { viewport } = useThree();
   const cubesRef = useRef([]);
   const animatedCubesRef = useRef([]);
-  const matcapDark = useLoader(THREE.TextureLoader, "/images/matcap_reflection prata 1.png");
-  const matcapLight = useLoader(THREE.TextureLoader, "/images/matcap_reflection prata 1.png");
+
+  const [matcapSilver, matcapDark] = useLoader(THREE.TextureLoader, [
+    "/images/matcap_reflection prata 1.png",
+    "/images/matcap_reflection preto 1.png",
+  ]);
 
   const cols = Math.ceil(viewport.width / STEP) + 6;
   const rows = Math.ceil(viewport.height / STEP) + 6;
@@ -59,29 +93,91 @@ function CubeGrid({ cursorWorldPos }) {
   const { geometries, materials } = useMemo(() => {
     if (typeof window === "undefined") return { geometries: null, materials: null };
 
-    const boxGeo = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
-    const edgeGeo = new THREE.EdgesGeometry(boxGeo);
+    // Geometria chanfrada com cantos arredondados (cornerRadius Spline: ~2%)
+    const boxGeo = new RoundedBoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, 2, 0.028);
 
     const N = 32;
-    const gradientMats = Array.from({ length: N }, (_, i) => {
-      const t = i / (N - 1);
-      const matcap = t > 0.55 ? matcapLight : matcapDark;
-      const color = new THREE.Color().lerpColors(
-        new THREE.Color("#616161"),
-        new THREE.Color("#b8b8b8"),
-        t
-      );
-      return new THREE.MeshMatcapMaterial({ matcap, color });
+
+    // 32 materiais PBR que variam do grafite profundo (#0d0e10) ao alumínio escovado brilhante (#dadde2)
+    const gradientMats = Array.from({ length: N }, (_, idx) => {
+      const t = idx / (N - 1); // 0 (mais escuro à direita) a 1 (mais claro à esquerda)
+
+      // Cor difusa calibrada para dar contraste cinematográfico
+      const tone = THREE.MathUtils.lerp(0.03, 0.90, Math.pow(t, 1.35));
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(tone, tone * 1.01, tone * 1.03),
+        metalness: THREE.MathUtils.lerp(0.10, 0.25, t),
+        roughness: THREE.MathUtils.lerp(0.45, 0.20, t),
+      });
+
+      mat.onBeforeCompile = (shader) => {
+        shader.uniforms.uMatcapSilver = { value: matcapSilver };
+        shader.uniforms.uMatcapDark = { value: matcapDark };
+        shader.uniforms.uBrightness = { value: t };
+
+        shader.vertexShader = `
+          varying vec3 vBoxWorldPos;
+        ` + shader.vertexShader;
+
+        shader.vertexShader = shader.vertexShader.replace(
+          "#include <begin_vertex>",
+          `
+            #include <begin_vertex>
+            vBoxWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+          `
+        );
+
+        shader.fragmentShader = `
+          uniform sampler2D uMatcapSilver;
+          uniform sampler2D uMatcapDark;
+          uniform float uBrightness;
+          varying vec3 vBoxWorldPos;
+        ` + shader.fragmentShader;
+
+        // Composição final: Matcaps prata/preto + iluminação real (direcional + cursor) + chanfros Fresnel
+        shader.fragmentShader = shader.fragmentShader.replace(
+          "#include <dithering_fragment>",
+          `
+            vec3 n = normalize(vNormal);
+            vec2 mcUV = n.xy * 0.5 + 0.5;
+            vec4 mcSilver = texture2D(uMatcapSilver, mcUV);
+            vec4 mcDark = texture2D(uMatcapDark, mcUV);
+
+            // Transição entre prata usinada e grafite acetinado
+            vec3 baseMatcap = mix(mcDark.rgb, mcSilver.rgb, pow(uBrightness, 1.2));
+
+            // Granulação de metal escovado (Noise 40% do Spline)
+            float grain = (fract(sin(dot(vBoxWorldPos.xy * 24.0, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * 0.08;
+            baseMatcap += grain * uBrightness;
+
+            // Realce das bordas chanfradas arredondadas (Fresnel 70%)
+            float rim = pow(1.0 - max(dot(n, vec3(0.0, 0.0, 1.0)), 0.0), 2.5);
+
+            // Luzes da cena: a luz verde do cursor entra viva, enquanto a luz branca difusa é proporcional ao brilho do cubo
+            vec3 sceneLight = gl_FragColor.rgb * (0.35 + 0.65 * uBrightness);
+
+            gl_FragColor.rgb = baseMatcap + sceneLight + vec3(rim * (0.14 + 0.32 * uBrightness));
+
+            #include <dithering_fragment>
+          `
+        );
+
+        mat.userData.shader = shader;
+      };
+
+      mat.customProgramCacheKey = () => `spline-dualmat-${idx}`;
+      return mat;
     });
 
-    const edgeDark = new THREE.LineBasicMaterial({ color: "#2a2a2a", transparent: true, opacity: 0.55 });
-    const edgeLight = new THREE.LineBasicMaterial({ color: "#4a4a4a", transparent: true, opacity: 0.75 });
-
     return {
-      geometries: { box: boxGeo, edge: edgeGeo },
-      materials: { gradientMats, edgeDark, edgeLight },
+      geometries: { box: boxGeo },
+      materials: {
+        gradientMats,
+      },
     };
-  }, [matcapDark, matcapLight]);
+
+  }, [matcapSilver, matcapDark]);
 
   /* ── Dados dos cubos: posição, rotação, brilho, material individual ── */
   const cubeData = useMemo(() => {
@@ -99,55 +195,34 @@ function CubeGrid({ cursorWorldPos }) {
         const baseY = row * STEP - offsetY;
         const dX = (rng() - 0.5) * 2 * XY_OFFSET_MAX;
         const dY = (rng() - 0.5) * 2 * XY_OFFSET_MAX;
-        const z = -0.8 + rng() * 1.6;
-        const rotX = (rng() - 0.5) * 0.04;
-        const rotY = (rng() - 0.5) * 0.04;
-        const scale = 0.95 + rng() * 0.1;
+        const z = -0.9 + rng() * 1.8;
+        const rotX = (rng() - 0.5) * 0.035;
+        const rotY = (rng() - 0.5) * 0.035;
+        const scale = 0.96 + rng() * 0.08;
 
-        const nx = col / (cols - 1);
-        const ny = row / (rows - 1);
+        const nx = col / (cols - 1); // 0 (esquerda) a 1 (direita)
+        const ny = row / (rows - 1); // 0 (fundo) a 1 (topo)
 
-        // 1) Superior esquerdo
-        const topLeft = Math.exp(
-          -((nx - 0.075) ** 2 / 0.11 + (ny - 1.0) ** 2 / 0.25)
-        ) * 1.0;
+        // Gradiente horizontal idêntico à referência:
+        // Lado esquerdo (nx < 0.35) brilhante prateado; transição suave para grafite no centro-direita.
+        const leftFade = Math.max(0, 1.0 - Math.pow(nx / 0.55, 1.4));
+        const topCornerBoost = Math.exp(-((nx - 0.05) ** 2 / 0.15 + (ny - 0.95) ** 2 / 0.20)) * 0.35;
 
-        // 2) Superior direito — núcleo no canto
-        const topRightCore = Math.exp(
-          -((nx - 1.0) ** 2 / 0.11 + (ny - 1.0) ** 2 / 0.20)
-        ) * 0.45;
-
-        // 2b) Faixa direita descendo até o fundo sem corte
-        const stripeWidth = 0.045 * (0.020 + 0.6 * ny); // ny=1 topo: 0.035 | ny=0 base: 0.0105
-        const topRightStripe = Math.exp(
-          -((nx - 0.86) ** 2 / stripeWidth)
-        ) * 0.12;
-
-        // 3) Inferior centro — meia-lua centralizada
-        const bottomMoon = Math.exp(
-          -((nx - 0.5) ** 2 / 0.04 + (ny - 0.0) ** 2 / 0.06)
-        ) * 0.65;
-        const centerDarken = Math.exp(
-          -((nx - 0.32) ** 2 / 0.09 + (ny - 0.48) ** 2 / 0.11)
-        ) * 0.15;
-
-        const rawInfluence = topLeft + topRightCore + topRightStripe + bottomMoon;
-        const influence = Math.min(rawInfluence, 1.0) - centerDarken;
         const grainBroad = noiseBroad(nx, ny);
         const grainFine = noiseFine(nx, ny);
-        const brightness = Math.max(0, Math.min(1,
-          influence * 0.7 + grainBroad * 0.28 + grainFine * 0.10 - 0.13
-        ));
-        /* ── Material compartilhado via gradiente ── */
-        const N = 32;
-        const matIndex = Math.round(brightness * 31);
-        const mat = materials.gradientMats[Math.max(0, Math.min(31, matIndex))];
 
-        const edgeMat = brightness > 0.3 ? materials.edgeLight : materials.edgeDark;
+        const rawBrightness = leftFade * 0.85 + topCornerBoost + (grainBroad * 0.18 + grainFine * 0.10) - 0.05;
+        const brightness = Math.max(0, Math.min(1, rawBrightness));
+
+        const matIndex = Math.round(brightness * 31);
+        const mat = materials.gradientMats[
+          Math.max(0, Math.min(31, matIndex))
+        ];
+
         data.push({
           x: baseX + dX, y: baseY + dY, z,
           rotX, rotY, rotZ: 0, scale,
-          mat, edgeMat,
+          mat,
           brightness,
         });
 
@@ -185,7 +260,7 @@ function CubeGrid({ cursorWorldPos }) {
     animatedCubesRef.current = animatedCubes;
   }, [cols, rows]);
 
-  /* ── Frame loop: animação ── */
+  /* ── Frame loop: animação + reação ao cursor ── */
   useFrame((state) => {
     const t = state.clock.elapsedTime;
 
@@ -198,6 +273,25 @@ function CubeGrid({ cursorWorldPos }) {
       else if (axis === "y") child.position.y = child.userData.originY + delta;
       else child.position.z = child.userData.originZ + delta;
     });
+
+    // Reação ao cursor: cubos próximos sobem levemente em Z
+    if (cursorWorldPos && cursorWorldPos.active > 0.05) {
+      const cx = cursorWorldPos.x;
+      const cy = cursorWorldPos.y;
+      const active = cursorWorldPos.active;
+      const RADIUS = 4.5; // raio de influência em unidades de mundo
+
+      cubesRef.current.forEach((child) => {
+        if (!child) return;
+        const dx = child.userData.originX - cx;
+        const dy = child.userData.originY - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < RADIUS) {
+          const lift = (1 - dist / RADIUS) * 1.8 * active;
+          child.position.z = child.userData.originZ + lift;
+        }
+      });
+    }
   });
 
   if (!geometries || cubeData.length === 0) return null;
@@ -214,7 +308,6 @@ function CubeGrid({ cursorWorldPos }) {
           rotation={[c.rotX, c.rotY, c.rotZ]}
           scale={c.scale}>
           <mesh geometry={geometries.box} material={c.mat} />
-          <lineSegments geometry={geometries.edge} material={c.edgeMat} />
         </group>
       ))}
     </group>
@@ -313,12 +406,34 @@ export default function Hero() {
         camera={{ position: [0, 0, 100], zoom: 80, near: 0.1, far: 500 }}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1 }}>
         <Suspense fallback={null}>
+          {/* Iluminação do cenário extraída fielmente do Spline */}
+          <ambientLight intensity={0.45} color="#222830" />
+          <directionalLight
+            position={[-10, 14, 16]}
+            intensity={3.95}
+            color="#ffffff"
+            castShadow={false}
+          />
+          <CursorLight cursorWorldPos={cursorWorldPos} />
           <CameraRig />
           <CursorTracker mousePos={mouse} cursorWorldPos={cursorWorldPos} />
           <GlowCursor mousePos={mouse} />
           <CubeGrid cursorWorldPos={cursorWorldPos} />
         </Suspense>
       </Canvas>
+
+      {/* Vinheta suave e elegante para profundidade, sem sufocar a geometria 3D */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[2]"
+        aria-hidden="true"
+        style={{
+          background: `radial-gradient(
+            circle at 50% 50%,
+            rgba(0, 0, 0, 0) 60%,
+            rgba(0, 0, 0, 0.45) 100%
+          )`,
+        }}
+      />
 
       {/* ── Vinheta azulada nos cantos (cor/glow, sem blur) ── 
       <div
@@ -350,10 +465,12 @@ export default function Hero() {
       <div className="absolute top-1/2 left-4 right-auto -translate-y-1/2 z-10 pointer-events-none flex flex-col items-start text-left gap-6 sm:left-[clamp(1.5rem,3vw,3rem)] sm:gap-[2.75rem] w-[calc(100%-2rem)] sm:w-auto max-w-[min(42rem,90vw)]">
         <h1
           className="font-ivy-presto text-[clamp(3.3rem,12vw,4.8rem)] sm:text-[clamp(3rem,4.7vw+1.4rem,6.4rem)] font-bold tracking-[0.01em] sm:tracking-[0.03em] text-[#eaeaea] leading-[0.92] sm:leading-[0.95] m-0 max-w-[13ch] sm:max-w-none"
-          style={{ textShadow: "0 2px 3px rgba(0,0,0,0.72)" }}>
+          style={{ textShadow: "0 2px 12px rgba(0,0,0,0.90), 0 1px 3px rgba(0,0,0,0.95)" }}>
           Seu projeto é nosso projeto
         </h1>
-        <p className="font-ivy-presto text-[clamp(0.95rem,3.8vw,1.1rem)] sm:text-[clamp(1.05rem,1.5vw+0.4rem,1.1rem)] font-bold tracking-[0.06em] sm:tracking-[0.08em] leading-[1.35] text-[#b7b1ab] m-0 max-w-[24rem] sm:max-w-[30rem]">
+        <p
+          className="font-ivy-presto text-[clamp(0.95rem,3.8vw,1.1rem)] sm:text-[clamp(1.05rem,1.5vw+0.4rem,1.1rem)] font-bold tracking-[0.06em] sm:tracking-[0.08em] leading-[1.35] text-[#d0cbc5] m-0 max-w-[24rem] sm:max-w-[30rem]"
+          style={{ textShadow: "0 1px 8px rgba(0,0,0,0.85)" }}>
           Criamos como se fosse para nossa casa !
         </p>
 
@@ -361,12 +478,14 @@ export default function Hero() {
           href="https://wa.me/5516981984000"
           target="_blank"
           rel="noreferrer"
-          className="font-neuehaas inline-flex items-center w-fit px-[1.15rem] py-[0.6rem] rounded-tr-[99px] rounded-bl-[99px] rounded-br-[99px] bg-[#f5f5f5] text-[#000000] font-extralight text-[0.65rem] tracking-[0.16em] uppercase no-underline mt-[0.35rem] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),0_2px_4px_rgba(0,0,0,0.15)] pointer-events-auto">
+          className="font-neuehaas inline-flex items-center w-fit px-[1.15rem] py-[0.6rem] rounded-tr-[99px] rounded-bl-[99px] rounded-br-[99px] bg-[#f5f5f5] text-[#000000] font-extralight text-[0.65rem] tracking-[0.16em] uppercase no-underline mt-[0.35rem] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),0_4px_12px_rgba(0,0,0,0.4)] pointer-events-auto">
           <span>Solicite seu orçamento →</span>
         </a>
       </div>
 
-      <div className="absolute bottom-[clamp(3.3rem,16.5vh,7.6rem)] left-4 sm:bottom-[clamp(3rem,8vh,6rem)] sm:left-[clamp(1.5rem,3vw,3rem)] z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.63rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#8d8d8d] uppercase w-max max-w-[90vw] whitespace-nowrap">
+      <div
+        className="absolute bottom-[clamp(3.3rem,16.5vh,7.6rem)] left-4 sm:bottom-[clamp(3rem,8vh,6rem)] sm:left-[clamp(1.5rem,3vw,3rem)] z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.63rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#b0b0b0] uppercase w-max max-w-[90vw] whitespace-nowrap"
+        style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
         <span className="h-px w-8 bg-[#8d8d8d]/60" />
         <span>Vidraçaria · Serralheria · Alto padrão</span>
       </div>
