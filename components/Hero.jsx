@@ -81,39 +81,41 @@ function CubeGrid({ cursorWorldPos }) {
   const cubesRef = useRef([]);
   const animatedCubesRef = useRef([]);
 
-  const [matcapSilver, matcapDark] = useLoader(THREE.TextureLoader, [
+  const [matcapSilver, matcapDark, matcapRoughness] = useLoader(THREE.TextureLoader, [
     "/images/matcap_reflection prata 1.png",
     "/images/matcap_reflection preto 1.png",
+    "/images/matcap_spline_roughness_3.jpg",
   ]);
 
   const cols = Math.ceil(viewport.width / STEP) + 6;
   const rows = Math.ceil(viewport.height / STEP) + 6;
 
-  /* ── Geometrias e Materiais compartilhados ── */
+  /* ── Geometrias e Materiais compartilhados (Passo 3: Shader Físico Spline) ── */
   const { geometries, materials } = useMemo(() => {
     if (typeof window === "undefined") return { geometries: null, materials: null };
 
-    // Geometria chanfrada com cantos arredondados (cornerRadius Spline: ~2%)
+    // Geometria chanfrada com cantos arredondados (cornerRadius Spline: 2% / 0.028)
     const boxGeo = new RoundedBoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, 2, 0.028);
 
     const N = 32;
 
-    // 32 materiais PBR que variam do grafite profundo (#0d0e10) ao alumínio escovado brilhante (#dadde2)
+    // Materiais PBR multicamadas fiéis ao "Wall material" do Spline
     const gradientMats = Array.from({ length: N }, (_, idx) => {
       const t = idx / (N - 1); // 0 (mais escuro à direita) a 1 (mais claro à esquerda)
 
-      // Cor difusa calibrada para dar contraste cinematográfico
-      const tone = THREE.MathUtils.lerp(0.03, 0.90, Math.pow(t, 1.35));
+      // Cor difusa base (#888888 modulada pelo gradiente)
+      const tone = THREE.MathUtils.lerp(0.04, 0.88, Math.pow(t, 1.3));
 
       const mat = new THREE.MeshStandardMaterial({
         color: new THREE.Color(tone, tone * 1.01, tone * 1.03),
-        metalness: THREE.MathUtils.lerp(0.10, 0.25, t),
-        roughness: THREE.MathUtils.lerp(0.45, 0.20, t),
+        metalness: THREE.MathUtils.lerp(0.12, 0.30, t), // Spline: metalness 0.3
+        roughness: THREE.MathUtils.lerp(0.55, 0.45, t), // Spline: roughness 0.553
       });
 
       mat.onBeforeCompile = (shader) => {
         shader.uniforms.uMatcapSilver = { value: matcapSilver };
         shader.uniforms.uMatcapDark = { value: matcapDark };
+        shader.uniforms.uMatcapRoughness = { value: matcapRoughness };
         shader.uniforms.uBrightness = { value: t };
 
         shader.vertexShader = `
@@ -131,33 +133,50 @@ function CubeGrid({ cursorWorldPos }) {
         shader.fragmentShader = `
           uniform sampler2D uMatcapSilver;
           uniform sampler2D uMatcapDark;
+          uniform sampler2D uMatcapRoughness;
           uniform float uBrightness;
           varying vec3 vBoxWorldPos;
         ` + shader.fragmentShader;
 
-        // Composição final: Matcaps prata/preto + iluminação real (direcional + cursor) + chanfros Fresnel
+        // Arquitetura de Camadas idêntica ao Spline:
+        // Camada 1: Base Color (#888888)
+        // Camada 2: Iluminação Física (Directional 3.95 + Cursor Point 5.72)
+        // Camada 3: Matcap Duplo + Especular Roughness
+        // Camada 4: Noise 40% (metal escovado 3D)
+        // Camada 5: Fresnel 70% (bias 0.16, scale 1.01, intensity 2.0)
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <dithering_fragment>",
           `
             vec3 n = normalize(vNormal);
             vec2 mcUV = n.xy * 0.5 + 0.5;
+
+            // Amostragem dos matcaps
             vec4 mcSilver = texture2D(uMatcapSilver, mcUV);
             vec4 mcDark = texture2D(uMatcapDark, mcUV);
+            vec4 mcRough = texture2D(uMatcapRoughness, mcUV);
 
-            // Transição entre prata usinada e grafite acetinado
+            // Transição tonal entre prata e grafite
             vec3 baseMatcap = mix(mcDark.rgb, mcSilver.rgb, pow(uBrightness, 1.2));
 
-            // Granulação de metal escovado (Noise 40% do Spline)
-            float grain = (fract(sin(dot(vBoxWorldPos.xy * 24.0, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * 0.08;
-            baseMatcap += grain * uBrightness;
+            // Camada 3 Spline: Matcap Roughness em modo Screen/Aditivo
+            baseMatcap += mcRough.rgb * (0.12 + 0.38 * uBrightness);
 
-            // Realce das bordas chanfradas arredondadas (Fresnel 70%)
-            float rim = pow(1.0 - max(dot(n, vec3(0.0, 0.0, 1.0)), 0.0), 2.5);
+            // Camada 4 Spline: Procedural Noise 40% (escala 0.7)
+            float n1 = fract(sin(dot(vBoxWorldPos.xy * 22.0, vec2(12.9898, 78.233))) * 43758.5453);
+            float n2 = fract(sin(dot(vBoxWorldPos.xy * 44.0, vec2(93.9898, 67.345))) * 23421.6312);
+            float grain = (n1 * 0.6 + n2 * 0.4 - 0.5) * 0.08;
+            baseMatcap += grain * (0.25 + 0.75 * uBrightness);
 
-            // Luzes da cena: a luz verde do cursor entra viva, enquanto a luz branca difusa é proporcional ao brilho do cubo
-            vec3 sceneLight = gl_FragColor.rgb * (0.35 + 0.65 * uBrightness);
+            // Camada 5 Spline: Fresnel 70% (bias 0.16, scale 1.01, intensity 2.0)
+            float viewDot = max(dot(n, vec3(0.0, 0.0, 1.0)), 0.0);
+            float fresnelFactor = pow(clamp((1.0 - viewDot) * 1.01 + 0.12, 0.0, 1.0), 2.2);
+            float fresnelRim = fresnelFactor * 1.4 * 0.7;
 
-            gl_FragColor.rgb = baseMatcap + sceneLight + vec3(rim * (0.14 + 0.32 * uBrightness));
+            // Camada 2 Spline: Iluminação Física PBR (reage ao Point Light do cursor e Directional)
+            vec3 physicalLight = gl_FragColor.rgb * (0.35 + 0.65 * uBrightness);
+
+            // Composição final equilibrada
+            gl_FragColor.rgb = baseMatcap + physicalLight + vec3(fresnelRim * (0.12 + 0.32 * uBrightness));
 
             #include <dithering_fragment>
           `
@@ -166,7 +185,7 @@ function CubeGrid({ cursorWorldPos }) {
         mat.userData.shader = shader;
       };
 
-      mat.customProgramCacheKey = () => `spline-dualmat-${idx}`;
+      mat.customProgramCacheKey = () => `spline-multilayers-${idx}`;
       return mat;
     });
 
@@ -177,7 +196,7 @@ function CubeGrid({ cursorWorldPos }) {
       },
     };
 
-  }, [matcapSilver, matcapDark]);
+  }, [matcapSilver, matcapDark, matcapRoughness]);
 
   /* ── Dados dos cubos: posição, rotação, brilho, material individual ── */
   const cubeData = useMemo(() => {
