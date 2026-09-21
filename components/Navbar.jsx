@@ -40,7 +40,7 @@ export default function Navbar() {
         "absolute top-0 left-0 w-full z-50",
         "flex items-center justify-between",
         "px-8 sm:px-12 py-5",
-        "backdrop-blur-md bg-[#121212]/65 border-b border-white/5",
+        "bg-[#121212] border-b border-white/5",
       ].join(" ")}>
       <motion.a
         variants={itemVariants}

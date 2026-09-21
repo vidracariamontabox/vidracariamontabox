@@ -81,122 +81,74 @@ function CubeGrid({ cursorWorldPos }) {
   const cubesRef = useRef([]);
   const animatedCubesRef = useRef([]);
 
-  const [matcapSilver, matcapDark, matcapRoughness] = useLoader(THREE.TextureLoader, [
+  // Etapa 5A: carrega apenas o matcap prata — base única de alumínio
+  const [matcapSilver] = useLoader(THREE.TextureLoader, [
     "/images/matcap_reflection prata 1.png",
-    "/images/matcap_reflection preto 1.png",
-    "/images/matcap_spline_roughness_3.jpg",
   ]);
 
   const cols = Math.ceil(viewport.width / STEP) + 6;
   const rows = Math.ceil(viewport.height / STEP) + 6;
 
-  /* ── Geometrias e Materiais compartilhados (Passo 3: Shader Físico Spline) ── */
+  /* ── Geometrias e Materiais — Etapa 5B: calibração de cor para #6c7887 ── */
   const { geometries, materials } = useMemo(() => {
     if (typeof window === "undefined") return { geometries: null, materials: null };
 
-    // Geometria chanfrada com cantos arredondados (cornerRadius Spline: 2% / 0.028)
-    const boxGeo = new RoundedBoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, 2, 0.028);
+    // Geometria chanfrada — Passo 4 preservado: 4 segments, radius 0.04
+    const boxGeo = new RoundedBoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, 4, 0.04);
+    boxGeo.computeVertexNormals();
 
     const N = 32;
 
-    // Materiais PBR multicamadas fiéis ao "Wall material" do Spline
-    const gradientMats = Array.from({ length: N }, (_, idx) => {
-      const t = idx / (N - 1); // 0 (mais escuro à direita) a 1 (mais claro à esquerda)
+    // Etapa 5B: base única calibrada para #6c7887 (azul-cinza metálico)
+    // Estratégia: MeshMatcapMaterial com color branco (matcap sem tinte extra)
+    // + onBeforeCompile para multiplicar pela cor-alvo com compensação de luminância.
+    // #6c7887 = RGB(108, 120, 135) = normalized (0.4235, 0.4706, 0.5294)
+    const TARGET_R = 0.4235;
+    const TARGET_G = 0.4706;
+    const TARGET_B = 0.5294;
+    const COMPENSATION = 1.40; // Aumentar se ficar escuro; reduzir se estouro no branco
 
-      // Cor difusa base (#888888 modulada pelo gradiente)
-      const tone = THREE.MathUtils.lerp(0.04, 0.88, Math.pow(t, 1.3));
-
-      const mat = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(tone, tone * 1.01, tone * 1.03),
-        metalness: THREE.MathUtils.lerp(0.12, 0.30, t), // Spline: metalness 0.3
-        roughness: THREE.MathUtils.lerp(0.55, 0.45, t), // Spline: roughness 0.553
+    const gradientMats = Array.from({ length: N }, () => {
+      const mat = new THREE.MeshMatcapMaterial({
+        matcap: matcapSilver,
+        color: new THREE.Color(1, 1, 1), // branco = matcap sem tinte adicional
       });
 
       mat.onBeforeCompile = (shader) => {
-        shader.uniforms.uMatcapSilver = { value: matcapSilver };
-        shader.uniforms.uMatcapDark = { value: matcapDark };
-        shader.uniforms.uMatcapRoughness = { value: matcapRoughness };
-        shader.uniforms.uBrightness = { value: t };
-
-        shader.vertexShader = `
-          varying vec3 vBoxWorldPos;
-        ` + shader.vertexShader;
-
-        shader.vertexShader = shader.vertexShader.replace(
-          "#include <begin_vertex>",
-          `
-            #include <begin_vertex>
-            vBoxWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
-          `
-        );
+        shader.uniforms.uTargetColor = {
+          value: new THREE.Color(TARGET_R, TARGET_G, TARGET_B),
+        };
+        shader.uniforms.uCompensation = { value: COMPENSATION };
 
         shader.fragmentShader = `
-          uniform sampler2D uMatcapSilver;
-          uniform sampler2D uMatcapDark;
-          uniform sampler2D uMatcapRoughness;
-          uniform float uBrightness;
-          varying vec3 vBoxWorldPos;
+          uniform vec3 uTargetColor;
+          uniform float uCompensation;
         ` + shader.fragmentShader;
 
-        // Arquitetura de Camadas idêntica ao Spline:
-        // Camada 1: Base Color (#888888)
-        // Camada 2: Iluminação Física (Directional 3.95 + Cursor Point 5.72)
-        // Camada 3: Matcap Duplo + Especular Roughness
-        // Camada 4: Noise 40% (metal escovado 3D)
-        // Camada 5: Fresnel 70% (bias 0.16, scale 1.01, intensity 2.0)
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <dithering_fragment>",
           `
-            vec3 n = normalize(vNormal);
-            vec2 mcUV = n.xy * 0.5 + 0.5;
+            // Cor-alvo x matcap x compensacao de luminancia
+            gl_FragColor.rgb = gl_FragColor.rgb * uTargetColor * uCompensation;
 
-            // Amostragem dos matcaps
-            vec4 mcSilver = texture2D(uMatcapSilver, mcUV);
-            vec4 mcDark = texture2D(uMatcapDark, mcUV);
-            vec4 mcRough = texture2D(uMatcapRoughness, mcUV);
-
-            // Transição tonal entre prata e grafite
-            vec3 baseMatcap = mix(mcDark.rgb, mcSilver.rgb, pow(uBrightness, 1.2));
-
-            // Camada 3 Spline: Matcap Roughness em modo Screen/Aditivo
-            baseMatcap += mcRough.rgb * (0.12 + 0.38 * uBrightness);
-
-            // Camada 4 Spline: Procedural Noise 40% (escala 0.7)
-            float n1 = fract(sin(dot(vBoxWorldPos.xy * 22.0, vec2(12.9898, 78.233))) * 43758.5453);
-            float n2 = fract(sin(dot(vBoxWorldPos.xy * 44.0, vec2(93.9898, 67.345))) * 23421.6312);
-            float grain = (n1 * 0.6 + n2 * 0.4 - 0.5) * 0.08;
-            baseMatcap += grain * (0.25 + 0.75 * uBrightness);
-
-            // Camada 5 Spline: Fresnel 70% (bias 0.16, scale 1.01, intensity 2.0)
-            float viewDot = max(dot(n, vec3(0.0, 0.0, 1.0)), 0.0);
-            float fresnelFactor = pow(clamp((1.0 - viewDot) * 1.01 + 0.12, 0.0, 1.0), 2.2);
-            float fresnelRim = fresnelFactor * 1.4 * 0.7;
-
-            // Camada 2 Spline: Iluminação Física PBR (reage ao Point Light do cursor e Directional)
-            vec3 physicalLight = gl_FragColor.rgb * (0.35 + 0.65 * uBrightness);
-
-            // Composição final equilibrada
-            gl_FragColor.rgb = baseMatcap + physicalLight + vec3(fresnelRim * (0.12 + 0.32 * uBrightness));
+            // Gamma suave para nao estourar bordas do chanfro
+            gl_FragColor.rgb = pow(max(gl_FragColor.rgb, vec3(0.0)), vec3(0.94));
 
             #include <dithering_fragment>
           `
         );
-
-        mat.userData.shader = shader;
       };
 
-      mat.customProgramCacheKey = () => `spline-multilayers-${idx}`;
+      mat.customProgramCacheKey = () => "spline-5b-base";
       return mat;
     });
 
     return {
       geometries: { box: boxGeo },
-      materials: {
-        gradientMats,
-      },
+      materials: { gradientMats },
     };
 
-  }, [matcapSilver, matcapDark, matcapRoughness]);
+  }, [matcapSilver]);
 
   /* ── Dados dos cubos: posição, rotação, brilho, material individual ── */
   const cubeData = useMemo(() => {
@@ -468,18 +420,9 @@ export default function Hero() {
         }}
       />*/}
 
-      {/* ── Linhas arquitetônicas decorativas ── */}
-      <div className="absolute inset-0 z-[3] pointer-events-none opacity-70" aria-hidden="true">
-        <svg className="h-full w-full" viewBox="0 0 1440 900" preserveAspectRatio="none" fill="none">
-          <path d="M0 690H1440" stroke="rgba(190,190,190,0.12)" strokeWidth="1" />
-          <path d="M1015 0V900" stroke="rgba(190,190,190,0.09)" strokeWidth="1" />
-          <path d="M1015 690H1440V310H1180L1015 145" stroke="rgba(190,190,190,0.16)" strokeWidth="1" />
-          <path d="M1180 310V690" stroke="rgba(190,190,190,0.07)" strokeWidth="1" />
-          <path d="M120 690V664H180" stroke="rgba(190,190,190,0.22)" strokeWidth="1" />
-          <circle cx="1015" cy="690" r="3" fill="rgba(210,210,210,0.55)" />
-          <circle cx="1180" cy="310" r="3" fill="rgba(210,210,210,0.45)" />
-        </svg>
-      </div>
+      {/* Passo 4: Overlays SVG de linhas arquitetônicas removidos.
+          O Spline original NÃO usa esses elementos — toda a estética
+          vem do material 3D, iluminação e chanfros. */}
 
       <div className="absolute top-1/2 left-4 right-auto -translate-y-1/2 z-10 pointer-events-none flex flex-col items-start text-left gap-6 sm:left-[clamp(1.5rem,3vw,3rem)] sm:gap-[2.75rem] w-[calc(100%-2rem)] sm:w-auto max-w-[min(42rem,90vw)]">
         <h1
