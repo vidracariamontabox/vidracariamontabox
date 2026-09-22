@@ -20,32 +20,6 @@ function makeRng(seed) {
   };
 }
 
-function makeValueNoise(ctrlX, ctrlY, rng) {
-  const grid = [];
-  for (let y = 0; y < ctrlY; y++) {
-    grid.push(Array.from({ length: ctrlX }, () => rng()));
-  }
-  return (nx, ny) => {
-    const fx = nx * (ctrlX - 1);
-    const fy = ny * (ctrlY - 1);
-    const x0 = Math.floor(fx), x1 = Math.min(x0 + 1, ctrlX - 1);
-    const y0 = Math.floor(fy), y1 = Math.min(y0 + 1, ctrlY - 1);
-    const tx = fx - x0, ty = fy - y0;
-    const a = grid[y0][x0], b = grid[y0][x1];
-    const c = grid[y1][x0], d = grid[y1][x1];
-    const top = a + (b - a) * tx;
-    const bottom = c + (d - c) * tx;
-    return top + (bottom - top) * ty;
-  };
-}
-
-/* ─────────────────────────────────────────────
-   CubeGrid com materiais individuais por cubo.
-   Cada cubo recebe seu próprio clone de material
-   para que possamos variar cor + emissive per-frame
-   com base na distância ao cursor do mouse.
-   ───────────────────────────────────────────── */
-
 /* ──────────────────────────────────────────────────────────────
    CursorLight: PointLight que segue o cursor em coordenadas de mundo
    Valores extraídos do Spline: cor #c3ff00, intensidade 5.72
@@ -81,81 +55,36 @@ function CubeGrid({ cursorWorldPos }) {
   const cubesRef = useRef([]);
   const animatedCubesRef = useRef([]);
 
-  // Etapa 5A: carrega apenas o matcap prata — base única de alumínio
-  const [matcapSilver] = useLoader(THREE.TextureLoader, [
-    "/images/matcap_reflection prata 1.png",
-  ]);
+  const roughness3 = useLoader(
+    THREE.TextureLoader,
+    "/images/matcap_roughness_3.jpg"
+  );
 
   const cols = Math.ceil(viewport.width / STEP) + 6;
   const rows = Math.ceil(viewport.height / STEP) + 6;
 
-  /* ── Geometrias e Materiais — Etapa 5B: calibração de cor para #6c7887 ── */
-  const { geometries, materials } = useMemo(() => {
-    if (typeof window === "undefined") return { geometries: null, materials: null };
+  const { geometries, material } = useMemo(() => {
+    if (typeof window === "undefined") return { geometries: null, material: null };
 
-    // Geometria chanfrada — Passo 4 preservado: 4 segments, radius 0.04
     const boxGeo = new RoundedBoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, 4, 0.04);
     boxGeo.computeVertexNormals();
 
-    const N = 32;
-
-    // Etapa 5B: base única calibrada para #6c7887 (azul-cinza metálico)
-    // Estratégia: MeshMatcapMaterial com color branco (matcap sem tinte extra)
-    // + onBeforeCompile para multiplicar pela cor-alvo com compensação de luminância.
-    // #6c7887 = RGB(108, 120, 135) = normalized (0.4235, 0.4706, 0.5294)
-    const TARGET_R = 0.4235;
-    const TARGET_G = 0.4706;
-    const TARGET_B = 0.5294;
-    const COMPENSATION = 1.40; // Aumentar se ficar escuro; reduzir se estouro no branco
-
-    const gradientMats = Array.from({ length: N }, () => {
-      const mat = new THREE.MeshMatcapMaterial({
-        matcap: matcapSilver,
-        color: new THREE.Color(1, 1, 1), // branco = matcap sem tinte adicional
-      });
-
-      mat.onBeforeCompile = (shader) => {
-        shader.uniforms.uTargetColor = {
-          value: new THREE.Color(TARGET_R, TARGET_G, TARGET_B),
-        };
-        shader.uniforms.uCompensation = { value: COMPENSATION };
-
-        shader.fragmentShader = `
-          uniform vec3 uTargetColor;
-          uniform float uCompensation;
-        ` + shader.fragmentShader;
-
-        shader.fragmentShader = shader.fragmentShader.replace(
-          "#include <dithering_fragment>",
-          `
-            // Cor-alvo x matcap x compensacao de luminancia
-            gl_FragColor.rgb = gl_FragColor.rgb * uTargetColor * uCompensation;
-
-            // Gamma suave para nao estourar bordas do chanfro
-            gl_FragColor.rgb = pow(max(gl_FragColor.rgb, vec3(0.0)), vec3(0.94));
-
-            #include <dithering_fragment>
-          `
-        );
-      };
-
-      mat.customProgramCacheKey = () => "spline-5b-base";
-      return mat;
-    });
+    roughness3.colorSpace = THREE.SRGBColorSpace;
 
     return {
       geometries: { box: boxGeo },
-      materials: { gradientMats },
+      material: new THREE.MeshMatcapMaterial({
+        matcap: roughness3,
+        color: new THREE.Color("#888888"),
+      }),
     };
-
-  }, [matcapSilver]);
+  }, [roughness3]);
 
   /* ── Dados dos cubos: posição, rotação, brilho, material individual ── */
   const cubeData = useMemo(() => {
-    if (!materials) return [];
+    if (!material) return [];
     const rng = makeRng(SEED);
-    const noiseBroad = makeValueNoise(6, 4, rng);
-    const noiseFine = makeValueNoise(16, 9, rng);
+
     const offsetX = ((cols - 1) * STEP) / 2;
     const offsetY = ((rows - 1) * STEP) / 2;
     const data = [];
@@ -171,36 +100,18 @@ function CubeGrid({ cursorWorldPos }) {
         const rotY = (rng() - 0.5) * 0.035;
         const scale = 0.96 + rng() * 0.08;
 
-        const nx = col / (cols - 1); // 0 (esquerda) a 1 (direita)
-        const ny = row / (rows - 1); // 0 (fundo) a 1 (topo)
-
-        // Gradiente horizontal idêntico à referência:
-        // Lado esquerdo (nx < 0.35) brilhante prateado; transição suave para grafite no centro-direita.
-        const leftFade = Math.max(0, 1.0 - Math.pow(nx / 0.55, 1.4));
-        const topCornerBoost = Math.exp(-((nx - 0.05) ** 2 / 0.15 + (ny - 0.95) ** 2 / 0.20)) * 0.35;
-
-        const grainBroad = noiseBroad(nx, ny);
-        const grainFine = noiseFine(nx, ny);
-
-        const rawBrightness = leftFade * 0.85 + topCornerBoost + (grainBroad * 0.18 + grainFine * 0.10) - 0.05;
-        const brightness = Math.max(0, Math.min(1, rawBrightness));
-
-        const matIndex = Math.round(brightness * 31);
-        const mat = materials.gradientMats[
-          Math.max(0, Math.min(31, matIndex))
-        ];
+        const mat = material;
 
         data.push({
           x: baseX + dX, y: baseY + dY, z,
           rotX, rotY, rotZ: 0, scale,
           mat,
-          brightness,
         });
 
       }
     }
     return data;
-  }, [cols, rows, materials]);
+  }, [cols, rows, material]);
 
   /* ── Animação de flutuação ── */
   useEffect(() => {
