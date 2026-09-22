@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useFrame } from "@react-three/fiber";
+import {useEffect, useRef, useState} from "react";
+import {useFrame, useThree} from "@react-three/fiber";
 import * as THREE from "three";
 
 function createGlowTexture() {
@@ -25,9 +25,10 @@ function createGlowTexture() {
   return new THREE.CanvasTexture(canvas);
 }
 
-export default function GlowCursor({ mousePos }) {
+export default function GlowCursor({mousePos}) {
+  const {camera} = useThree();
   const meshRef = useRef(null);
-  const targetRef = useRef({ x: 0, y: 0 });
+  const targetRef = useRef({x: 0, y: 0});
   const [glowTexture, setGlowTexture] = useState(null);
 
   useEffect(() => {
@@ -36,12 +37,12 @@ export default function GlowCursor({ mousePos }) {
 
   useEffect(() => {
     if (mousePos.x === -999) return;
-    const zoomLevel = 50;
+    const zoomLevel = camera.zoom;
     targetRef.current = {
       x: mousePos.x / zoomLevel - window.innerWidth / 2 / zoomLevel,
       y: -(mousePos.y / zoomLevel - window.innerHeight / 2 / zoomLevel),
     };
-  }, [mousePos]);
+  }, [camera.zoom, mousePos]);
 
   useFrame(() => {
     const mesh = meshRef.current;
@@ -61,13 +62,10 @@ export default function GlowCursor({ mousePos }) {
 
   if (!glowTexture) return null;
 
-  return null; // Componente desativado a pedido do usuário
-  /*
   return (
-    <mesh ref={meshRef} position={[0, 0, -3.5]} visible={false}>
-      <planeGeometry args={[12, 12]} />
+    <mesh ref={meshRef} position={[0, 0, -5]} visible={false}>
+      <planeGeometry args={[28, 28]} />
       <meshBasicMaterial map={glowTexture} transparent opacity={1} depthWrite={false} fog={false} />
     </mesh>
   );
-  */
 }

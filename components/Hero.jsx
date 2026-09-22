@@ -20,27 +20,6 @@ function makeRng(seed) {
   };
 }
 
-/* ──────────────────────────────────────────────────────────────
-   CursorLight: PointLight que segue o cursor em coordenadas de mundo
-   Valores extraídos do Spline: cor #c3ff00, intensidade 5.72
-   ────────────────────────────────────────────────────────────── */
-function CursorLight({cursorWorldPos}) {
-  const lightRef = useRef();
-
-  useFrame(() => {
-    if (!lightRef.current || !cursorWorldPos) return;
-    const active = cursorWorldPos.active;
-    // Interpola suavemente para a posição do cursor
-    lightRef.current.position.x = cursorWorldPos.x;
-    lightRef.current.position.y = cursorWorldPos.y;
-    lightRef.current.position.z = 8;
-    // Intensidade aparece/desaparece com o cursor
-    lightRef.current.intensity = active * 5.72;
-  });
-
-  return <pointLight ref={lightRef} color="#c3ff00" intensity={0} distance={28} decay={2} position={[0, 0, 8]} />;
-}
-
 function CubeGrid({cursorWorldPos}) {
   const {viewport} = useThree();
   const cubesRef = useRef([]);
@@ -63,7 +42,7 @@ function CubeGrid({cursorWorldPos}) {
       geometries: {box: boxGeo},
       material: (() => {
         const mat = new THREE.MeshStandardMaterial({
-          color: new THREE.Color("#888888"),
+          color: new THREE.Color("#7A848E"),
           roughness: 0.55,
           metalness: 0.85,
           envMapIntensity: 0,
@@ -124,6 +103,10 @@ function CubeGrid({cursorWorldPos}) {
 
               gl_FragColor.rgb *= grainFactor;
               gl_FragColor.rgb += vec3(fresnel * 0.12);
+
+              vec3 lightDir = normalize(vec3(-10.0, 14.0, 16.0));
+              float ndl = clamp(dot(n, lightDir), 0.0, 1.0);
+              gl_FragColor.rgb *= mix(0.55, 1.08, ndl);
             `,
           );
         };
@@ -215,7 +198,7 @@ function CubeGrid({cursorWorldPos}) {
     });
 
     // Reação ao cursor: cubos próximos sobem levemente em Z
-    if (cursorWorldPos && cursorWorldPos.active > 0.05) {
+    if (cursorWorldPos) {
       const cx = cursorWorldPos.x;
       const cy = cursorWorldPos.y;
       const active = cursorWorldPos.active;
@@ -268,16 +251,17 @@ function CameraRig() {
    coordenadas de mundo e expõe via ref mutável
    ───────────────────────────────────────────── */
 function CursorTracker({mousePos, cursorWorldPos}) {
+  const {camera} = useThree();
   const targetRef = useRef({x: 0, y: 0});
 
   useEffect(() => {
     if (mousePos.x === -999) return;
-    const zoomLevel = 50;
+    const zoomLevel = camera.zoom;
     targetRef.current = {
       x: mousePos.x / zoomLevel - window.innerWidth / 2 / zoomLevel,
       y: -(mousePos.y / zoomLevel - window.innerHeight / 2 / zoomLevel),
     };
-  }, [mousePos]);
+  }, [camera.zoom, mousePos]);
 
   useFrame(() => {
     if (!cursorWorldPos) return;
@@ -347,9 +331,8 @@ export default function Hero() {
         style={{position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1}}>
         <Suspense fallback={null}>
           {/* Iluminação do cenário extraída fielmente do Spline */}
-          <ambientLight intensity={0.45} color="#222830" />
-          <directionalLight position={[-10, 14, 16]} intensity={3.95} color="#ffffff" castShadow={false} />
-          <CursorLight cursorWorldPos={cursorWorldPos} />
+          <ambientLight intensity={0.3} color="#1C1E22" />
+          <directionalLight position={[-10, 14, 16]} intensity={9.95} color="#C8D2DC" castShadow={false} />
           <CameraRig />
           <CursorTracker mousePos={mouse} cursorWorldPos={cursorWorldPos} />
           <GlowCursor mousePos={mouse} />
