@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useThree, useLoader } from "@react-three/fiber";
+import {Suspense, useEffect, useMemo, useRef, useState} from "react";
+import {Canvas, useFrame, useThree, useLoader} from "@react-three/fiber";
 import * as THREE from "three";
-import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import {RoundedBoxGeometry} from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import GlowCursor from "@/components/GlowCursor";
 
 const CUBE_SIZE = 1.0;
@@ -24,7 +24,7 @@ function makeRng(seed) {
    CursorLight: PointLight que segue o cursor em coordenadas de mundo
    Valores extraídos do Spline: cor #c3ff00, intensidade 5.72
    ────────────────────────────────────────────────────────────── */
-function CursorLight({ cursorWorldPos }) {
+function CursorLight({cursorWorldPos}) {
   const lightRef = useRef();
 
   useFrame(() => {
@@ -38,45 +38,99 @@ function CursorLight({ cursorWorldPos }) {
     lightRef.current.intensity = active * 5.72;
   });
 
-  return (
-    <pointLight
-      ref={lightRef}
-      color="#c3ff00"
-      intensity={0}
-      distance={28}
-      decay={2}
-      position={[0, 0, 8]}
-    />
-  );
+  return <pointLight ref={lightRef} color="#c3ff00" intensity={0} distance={28} decay={2} position={[0, 0, 8]} />;
 }
 
-function CubeGrid({ cursorWorldPos }) {
-  const { viewport } = useThree();
+function CubeGrid({cursorWorldPos}) {
+  const {viewport} = useThree();
   const cubesRef = useRef([]);
   const animatedCubesRef = useRef([]);
 
-  const roughness3 = useLoader(
-    THREE.TextureLoader,
-    "/images/matcap_roughness_3.jpg"
-  );
+  const roughness3 = useLoader(THREE.TextureLoader, "/images/matcap_spline_roughness_3.jpg");
 
   const cols = Math.ceil(viewport.width / STEP) + 6;
   const rows = Math.ceil(viewport.height / STEP) + 6;
 
-  const { geometries, material } = useMemo(() => {
-    if (typeof window === "undefined") return { geometries: null, material: null };
+  const {geometries, material} = useMemo(() => {
+    if (typeof window === "undefined") return {geometries: null, material: null};
 
-    const boxGeo = new RoundedBoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, 4, 0.04);
+    const boxGeo = new RoundedBoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, 2, 0.012);
     boxGeo.computeVertexNormals();
 
     roughness3.colorSpace = THREE.SRGBColorSpace;
 
     return {
-      geometries: { box: boxGeo },
-      material: new THREE.MeshMatcapMaterial({
-        matcap: roughness3,
-        color: new THREE.Color("#888888"),
-      }),
+      geometries: {box: boxGeo},
+      material: (() => {
+        const mat = new THREE.MeshStandardMaterial({
+          color: new THREE.Color("#888888"),
+          roughness: 0.55,
+          metalness: 0.85,
+          envMapIntensity: 0,
+        });
+
+        mat.onBeforeCompile = (shader) => {
+          shader.vertexShader = shader.vertexShader.replace(
+            "#include <common>",
+            `
+              #include <common>
+              varying vec3 vCubeLocalPosition;
+            `,
+          );
+          shader.vertexShader = shader.vertexShader.replace(
+            "#include <begin_vertex>",
+            `
+              #include <begin_vertex>
+              vCubeLocalPosition = position;
+            `,
+          );
+
+          shader.uniforms.uMatcap = {value: roughness3};
+          shader.uniforms.uNoiseStrength = {value: 0.4};
+          shader.uniforms.uFresnelStrength = {value: 0.7};
+          shader.fragmentShader =
+            `
+            uniform sampler2D uMatcap;
+            uniform float uNoiseStrength;
+            uniform float uFresnelStrength;
+            varying vec3 vCubeLocalPosition;
+
+            float wallHash(vec3 p) {
+              p = fract(p * 0.3183099 + 0.1);
+              p *= 17.0;
+              return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+            }
+          ` + shader.fragmentShader;
+
+          shader.fragmentShader = shader.fragmentShader.replace(
+            "#include <opaque_fragment>",
+            `
+              #include <opaque_fragment>
+
+              vec3 n = normalize(normal);
+              vec3 v = normalize(vViewPosition);
+              vec3 x = normalize(vec3(v.z, 0.0, -v.x));
+              vec3 y = cross(v, x);
+              vec2 uv = vec2(dot(x, n), dot(y, n)) * 0.495 + 0.5;
+              vec3 mc = texture2D(uMatcap, uv).rgb;
+              vec3 standardLighting = gl_FragColor.rgb;
+
+              gl_FragColor.rgb = mix(standardLighting, standardLighting * mc * 1.6, 0.55);
+              gl_FragColor.rgb += mc * 0.18;
+
+              float grain = wallHash(vCubeLocalPosition * 8.0);
+              float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
+              float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
+
+              gl_FragColor.rgb *= grainFactor;
+              gl_FragColor.rgb += vec3(fresnel * 0.12);
+            `,
+          );
+        };
+
+        mat.customProgramCacheKey = () => "wall-stack-v1";
+        return mat;
+      })(),
     };
   }, [roughness3]);
 
@@ -103,11 +157,15 @@ function CubeGrid({ cursorWorldPos }) {
         const mat = material;
 
         data.push({
-          x: baseX + dX, y: baseY + dY, z,
-          rotX, rotY, rotZ: 0, scale,
+          x: baseX + dX,
+          y: baseY + dY,
+          z,
+          rotX,
+          rotY,
+          rotZ: 0,
+          scale,
           mat,
         });
-
       }
     }
     return data;
@@ -149,7 +207,7 @@ function CubeGrid({ cursorWorldPos }) {
     // Animação de flutuação
     animatedCubesRef.current.forEach((child) => {
       if (!child) return;
-      const { axis, phase, speed, amplitude } = child.userData;
+      const {axis, phase, speed, amplitude} = child.userData;
       const delta = Math.sin(t * speed + phase) * amplitude;
       if (axis === "x") child.position.x = child.userData.originX + delta;
       else if (axis === "y") child.position.y = child.userData.originY + delta;
@@ -197,7 +255,7 @@ function CubeGrid({ cursorWorldPos }) {
 }
 
 function CameraRig() {
-  const { camera } = useThree();
+  const {camera} = useThree();
   useEffect(() => {
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
@@ -209,8 +267,8 @@ function CameraRig() {
    CursorTracker: converte posição do mouse em
    coordenadas de mundo e expõe via ref mutável
    ───────────────────────────────────────────── */
-function CursorTracker({ mousePos, cursorWorldPos }) {
-  const targetRef = useRef({ x: 0, y: 0 });
+function CursorTracker({mousePos, cursorWorldPos}) {
+  const targetRef = useRef({x: 0, y: 0});
 
   useEffect(() => {
     if (mousePos.x === -999) return;
@@ -238,13 +296,13 @@ function CursorTracker({ mousePos, cursorWorldPos }) {
 }
 
 export default function Hero() {
-  const [mouse, setMouse] = useState({ x: -999, y: -999 });
+  const [mouse, setMouse] = useState({x: -999, y: -999});
   const [isHeroActive, setIsHeroActive] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const sectionRef = useRef(null);
 
   // Objeto mutável compartilhado entre CursorTracker e CubeGrid
-  const cursorWorldPos = useMemo(() => ({ x: 0, y: 0, active: 0 }), []);
+  const cursorWorldPos = useMemo(() => ({x: 0, y: 0, active: 0}), []);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -274,28 +332,23 @@ export default function Hero() {
       id="hero"
       onMouseMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
-        setMouse({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        setMouse({x: e.clientX - rect.left, y: e.clientY - rect.top});
       }}
       onMouseLeave={() => {
-        setMouse({ x: -999, y: -999 });
+        setMouse({x: -999, y: -999});
       }}
       className="relative w-full overflow-hidden bg-[#080808] h-dvh min-h-dvh max-h-dvh">
       <Canvas
         orthographic
         frameloop={isHeroActive && !prefersReducedMotion ? "always" : "never"}
         dpr={[1, 1.5]}
-        gl={{ alpha: true }}
-        camera={{ position: [0, 0, 100], zoom: 80, near: 0.1, far: 500 }}
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1 }}>
+        gl={{alpha: true}}
+        camera={{position: [0, 0, 100], zoom: 80, near: 0.1, far: 500}}
+        style={{position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1}}>
         <Suspense fallback={null}>
           {/* Iluminação do cenário extraída fielmente do Spline */}
           <ambientLight intensity={0.45} color="#222830" />
-          <directionalLight
-            position={[-10, 14, 16]}
-            intensity={3.95}
-            color="#ffffff"
-            castShadow={false}
-          />
+          <directionalLight position={[-10, 14, 16]} intensity={3.95} color="#ffffff" castShadow={false} />
           <CursorLight cursorWorldPos={cursorWorldPos} />
           <CameraRig />
           <CursorTracker mousePos={mouse} cursorWorldPos={cursorWorldPos} />
@@ -338,12 +391,12 @@ export default function Hero() {
       <div className="absolute top-1/2 left-4 right-auto -translate-y-1/2 z-10 pointer-events-none flex flex-col items-start text-left gap-6 sm:left-[clamp(1.5rem,3vw,3rem)] sm:gap-[2.75rem] w-[calc(100%-2rem)] sm:w-auto max-w-[min(42rem,90vw)]">
         <h1
           className="font-ivy-presto text-[clamp(3.3rem,12vw,4.8rem)] sm:text-[clamp(3rem,4.7vw+1.4rem,6.4rem)] font-bold tracking-[0.01em] sm:tracking-[0.03em] text-[#eaeaea] leading-[0.92] sm:leading-[0.95] m-0 max-w-[13ch] sm:max-w-none"
-          style={{ textShadow: "0 2px 12px rgba(0,0,0,0.90), 0 1px 3px rgba(0,0,0,0.95)" }}>
+          style={{textShadow: "0 2px 12px rgba(0,0,0,0.90), 0 1px 3px rgba(0,0,0,0.95)"}}>
           Seu projeto é nosso projeto
         </h1>
         <p
           className="font-ivy-presto text-[clamp(0.95rem,3.8vw,1.1rem)] sm:text-[clamp(1.05rem,1.5vw+0.4rem,1.1rem)] font-bold tracking-[0.06em] sm:tracking-[0.08em] leading-[1.35] text-[#d0cbc5] m-0 max-w-[24rem] sm:max-w-[30rem]"
-          style={{ textShadow: "0 1px 8px rgba(0,0,0,0.85)" }}>
+          style={{textShadow: "0 1px 8px rgba(0,0,0,0.85)"}}>
           Criamos como se fosse para nossa casa !
         </p>
 
@@ -358,7 +411,7 @@ export default function Hero() {
 
       <div
         className="absolute bottom-[clamp(3.3rem,16.5vh,7.6rem)] left-4 sm:bottom-[clamp(3rem,8vh,6rem)] sm:left-[clamp(1.5rem,3vw,3rem)] z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.63rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#b0b0b0] uppercase w-max max-w-[90vw] whitespace-nowrap"
-        style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
+        style={{textShadow: "0 1px 6px rgba(0,0,0,0.9)"}}>
         <span className="h-px w-8 bg-[#8d8d8d]/60" />
         <span>Vidraçaria · Serralheria · Alto padrão</span>
       </div>
