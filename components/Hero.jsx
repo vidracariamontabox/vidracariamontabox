@@ -42,7 +42,7 @@ function CubeGrid({cursorWorldPos}) {
       geometries: {box: boxGeo},
       material: (() => {
         const mat = new THREE.MeshStandardMaterial({
-          color: new THREE.Color("#7A848E"),
+          color: new THREE.Color("#6c7787"),
           roughness: 0.55,
           metalness: 0.85,
           envMapIntensity: 0,
@@ -104,12 +104,12 @@ function CubeGrid({cursorWorldPos}) {
               gl_FragColor.rgb *= grainFactor;
               gl_FragColor.rgb += vec3(fresnel * 0.12);
 
-              vec3 lightDir = normalize(vec3(-10.0, 14.0, 16.0));
-              float ndl = clamp(dot(n, lightDir), 0.0, 1.0);
-              gl_FragColor.rgb *= mix(0.55, 1.08, ndl);
+              
             `,
           );
-        };
+        }; // vec3 lightDir = normalize(vec3(-10.0, 14.0, 16.0));
+        // float ndl = clamp(dot(n, lightDir), 0.0, 1.0);
+        // gl_FragColor.rgb *= mix(0.55, 1.08, ndl);
 
         mat.customProgramCacheKey = () => "wall-stack-v1";
         return mat;
@@ -331,8 +331,8 @@ export default function Hero() {
         style={{position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1}}>
         <Suspense fallback={null}>
           {/* Iluminação do cenário extraída fielmente do Spline */}
-          <ambientLight intensity={0.3} color="#1C1E22" />
-          <directionalLight position={[-10, 14, 16]} intensity={9.95} color="#C8D2DC" castShadow={false} />
+          <ambientLight intensity={0.32} color="#1C1E22" />
+          <directionalLight position={[-10, 14, 16]} intensity={6.5} color="#c8d2dc" />
           <CameraRig />
           <CursorTracker mousePos={mouse} cursorWorldPos={cursorWorldPos} />
           <GlowCursor mousePos={mouse} />
