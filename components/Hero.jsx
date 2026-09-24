@@ -12,6 +12,10 @@ const STEP = CUBE_SIZE + GAP;
 const XY_OFFSET_MAX = STEP * 0.025;
 const SEED = 7331;
 
+const Z_LAYERS = 2;
+const Z_GAP = 2.2;
+const Z_JITTER = 0.45;
+
 function makeRng(seed) {
   let s = seed;
   return () => {
@@ -44,7 +48,7 @@ function CubeGrid({cursorWorldPos}) {
         const mat = new THREE.MeshStandardMaterial({
           color: new THREE.Color("#6c7787"),
           roughness: 0.55,
-          metalness: 0.85,
+          metalness: 0.28,
           envMapIntensity: 0,
         });
 
@@ -88,30 +92,26 @@ function CubeGrid({cursorWorldPos}) {
 
               vec3 n = normalize(normal);
               vec3 v = normalize(vViewPosition);
-              vec3 x = normalize(vec3(v.z, 0.0, -v.x));
-              vec3 y = cross(v, x);
-              vec2 uv = vec2(dot(x, n), dot(y, n)) * 0.495 + 0.5;
+              vec2 uv = n.xy * 0.495 + 0.5;
               vec3 mc = texture2D(uMatcap, uv).rgb;
               vec3 standardLighting = gl_FragColor.rgb;
 
-              gl_FragColor.rgb = mix(standardLighting, standardLighting * mc * 1.6, 0.55);
-              gl_FragColor.rgb += mc * 0.18;
+              // matcap SUTIL — não manda no miolo
+              gl_FragColor.rgb = mix(standardLighting, standardLighting * (0.35 + mc * 1.2), 0.28);
+              gl_FragColor.rgb += mc * 0.10;
 
               float grain = wallHash(vCubeLocalPosition * 8.0);
               float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
               float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
-
               gl_FragColor.rgb *= grainFactor;
               gl_FragColor.rgb += vec3(fresnel * 0.12);
 
               
             `,
           );
-        }; // vec3 lightDir = normalize(vec3(-10.0, 14.0, 16.0));
-        // float ndl = clamp(dot(n, lightDir), 0.0, 1.0);
-        // gl_FragColor.rgb *= mix(0.55, 1.08, ndl);
+        };
 
-        mat.customProgramCacheKey = () => "wall-stack-v1";
+        mat.customProgramCacheKey = () => "wall-stack-v4";
         return mat;
       })(),
     };
@@ -121,7 +121,6 @@ function CubeGrid({cursorWorldPos}) {
   const cubeData = useMemo(() => {
     if (!material) return [];
     const rng = makeRng(SEED);
-
     const offsetX = ((cols - 1) * STEP) / 2;
     const offsetY = ((rows - 1) * STEP) / 2;
     const data = [];
@@ -130,28 +129,30 @@ function CubeGrid({cursorWorldPos}) {
       for (let col = 0; col < cols; col++) {
         const baseX = col * STEP - offsetX;
         const baseY = row * STEP - offsetY;
-        const dX = (rng() - 0.5) * 2 * XY_OFFSET_MAX;
-        const dY = (rng() - 0.5) * 2 * XY_OFFSET_MAX;
-        const z = -0.9 + rng() * 1.8;
-        const rotX = (rng() - 0.5) * 0.035;
-        const rotY = (rng() - 0.5) * 0.035;
-        const scale = 0.96 + rng() * 0.08;
 
-        const mat = material;
+        for (let layer = 0; layer < Z_LAYERS; layer++) {
+          const dX = (rng() - 0.5) * 2 * XY_OFFSET_MAX;
+          const dY = (rng() - 0.5) * 2 * XY_OFFSET_MAX;
+          const z = layer * Z_GAP + (rng() - 0.5) * 2 * Z_JITTER;
+          const rotX = (rng() - 0.5) * 0.09;
+          const rotY = (rng() - 0.5) * 0.07;
+          const scale = 0.96 + rng() * 0.08;
 
-        data.push({
-          x: baseX + dX,
-          y: baseY + dY,
-          z,
-          rotX,
-          rotY,
-          rotZ: 0,
-          scale,
-          mat,
-        });
+          data.push({
+            x: baseX + dX,
+            y: baseY + dY,
+            z,
+            rotX,
+            rotY,
+            rotZ: 0,
+            scale,
+            mat: material,
+          });
+        }
       }
     }
-    return data;
+
+    return data; // <-- fica
   }, [cols, rows, material]);
 
   /* ── Animação de flutuação ── */
@@ -169,14 +170,14 @@ function CubeGrid({cursorWorldPos}) {
       child.userData.animated = false;
     });
 
-    const axes = ["x", "y", "z"];
+    const axes = ["x", "y"];
 
     shuffled.slice(0, animCount).forEach((child, i) => {
       child.userData.animated = true;
       child.userData.axis = axes[i % 3];
       child.userData.phase = Math.random() * Math.PI * 2;
       child.userData.speed = 0.3 + Math.random() * 0.4;
-      child.userData.amplitude = 0.2 + Math.random() * 0.2;
+      child.userData.amplitude = 0.06 + Math.random() * 0.4;
       animatedCubes.push(child);
     });
 
@@ -210,8 +211,10 @@ function CubeGrid({cursorWorldPos}) {
         const dy = child.userData.originY - cy;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < RADIUS) {
-          const lift = (1 - dist / RADIUS) * 1.8 * active;
+          const lift = (1 - dist / RADIUS) * 0.35 * active;
           child.position.z = child.userData.originZ + lift;
+        } else {
+          child.position.z = child.userData.originZ;
         }
       });
     }
@@ -331,8 +334,8 @@ export default function Hero() {
         style={{position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1}}>
         <Suspense fallback={null}>
           {/* Iluminação do cenário extraída fielmente do Spline */}
-          <ambientLight intensity={0.32} color="#1C1E22" />
-          <directionalLight position={[-10, 14, 16]} intensity={6.5} color="#c8d2dc" />
+          <ambientLight intensity={0.45} color="#1A1A1A" />
+          <directionalLight position={[0, 20, 10]} intensity={2.4} color="#B5B5B5" />
           <CameraRig />
           <CursorTracker mousePos={mouse} cursorWorldPos={cursorWorldPos} />
           <GlowCursor mousePos={mouse} />
@@ -348,7 +351,7 @@ export default function Hero() {
           background: `radial-gradient(
             circle at 50% 50%,
             rgba(0, 0, 0, 0) 60%,
-            rgba(0, 0, 0, 0.45) 100%
+            rgba(0, 0, 0, 0.18) 100%
           )`,
         }}
       />
