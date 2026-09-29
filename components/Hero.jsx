@@ -29,7 +29,7 @@ function CubeGrid({cursorWorldPos}) {
   const cubesRef = useRef([]);
   const animatedCubesRef = useRef([]);
 
-  const roughness3 = useLoader(THREE.TextureLoader, "/images/matcap_spline_roughness_3.jpg");
+  const roughness3 = useLoader(THREE.TextureLoader, "/images/matcap-base-grafite.png");
 
   const cols = Math.ceil(viewport.width / STEP) + 6;
   const rows = Math.ceil(viewport.height / STEP) + 6;
