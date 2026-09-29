@@ -46,7 +46,7 @@ function CubeGrid({cursorWorldPos}) {
       geometries: {box: boxGeo},
       material: (() => {
         const mat = new THREE.MeshStandardMaterial({
-          color: new THREE.Color("#6c7787"),
+          color: new THREE.Color("#888888"),
           roughness: 0.55,
           metalness: 0.28,
           envMapIntensity: 0,
@@ -97,19 +97,26 @@ function CubeGrid({cursorWorldPos}) {
               vec3 standardLighting = gl_FragColor.rgb;
 
               // matcap SUTIL — não manda no miolo
-              gl_FragColor.rgb = mix(standardLighting, standardLighting * (0.35 + mc * 1.2), 0.28);
-              gl_FragColor.rgb += mc * 0.10;
+              gl_FragColor.rgb = mix( standardLighting, standardLighting * (0.35 + mc * 1.2), 0.08 );
+              gl_FragColor.rgb += mc * 0.03;
+              gl_FragColor.rgb *= grainFactor;
+              float grainFactor = mix( 0.97, 1.03, grain );
+              gl_FragColor.rgb += vec3(fresnel * 0.06);
+
+
+
 
               float grain = wallHash(vCubeLocalPosition * 8.0);
               float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
               float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
-              gl_FragColor.rgb *= grainFactor;
-              gl_FragColor.rgb += vec3(fresnel * 0.12);
+              
 
               
             `,
           );
         };
+        //
+        // gl_FragColor.rgb += vec3(fresnel * 0.12);
 
         mat.customProgramCacheKey = () => "wall-stack-v4";
         return mat;
@@ -334,7 +341,7 @@ export default function Hero() {
         style={{position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1}}>
         <Suspense fallback={null}>
           {/* Iluminação do cenário extraída fielmente do Spline */}
-          <ambientLight intensity={0.45} color="#1A1A1A" />
+          <ambientLight intensity={0.95} color="#1A1A1A" />
           <directionalLight position={[0, 20, 10]} intensity={2.4} color="#B5B5B5" />
           <CameraRig />
           <CursorTracker mousePos={mouse} cursorWorldPos={cursorWorldPos} />
