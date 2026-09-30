@@ -99,17 +99,11 @@ function CubeGrid({cursorWorldPos}) {
               // matcap SUTIL — não manda no miolo
               gl_FragColor.rgb = mix( standardLighting, standardLighting * (0.35 + mc * 1.2), 0.08 );
               gl_FragColor.rgb += mc * 0.03;
-              gl_FragColor.rgb *= grainFactor;
-              float grainFactor = mix( 0.97, 1.03, grain );
-              gl_FragColor.rgb += vec3(fresnel * 0.06);
-
-
-
-
               float grain = wallHash(vCubeLocalPosition * 8.0);
               float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
               float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
-              
+              gl_FragColor.rgb *= grainFactor;
+              gl_FragColor.rgb += vec3(fresnel * 0.06);
 
               
             `,
