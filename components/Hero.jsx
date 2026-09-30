@@ -46,73 +46,66 @@ function CubeGrid({cursorWorldPos}) {
       geometries: {box: boxGeo},
       material: (() => {
         const mat = new THREE.MeshStandardMaterial({
-          color: new THREE.Color("#888888"),
+          color: new THREE.Color("#6c7787"),
+          metalness: 0.08,
           roughness: 0.55,
-          metalness: 0.28,
           envMapIntensity: 0,
         });
 
         mat.onBeforeCompile = (shader) => {
+          shader.uniforms.uMatcap = {value: roughness3};
+          shader.uniforms.uNoiseStrength = {value: 0.22};
+          shader.uniforms.uFresnelStrength = {value: 0.55};
+
           shader.vertexShader = shader.vertexShader.replace(
             "#include <common>",
-            `
-              #include <common>
-              varying vec3 vCubeLocalPosition;
-            `,
+            `#include <common>
+     varying vec3 vCubeLocalPosition;`,
           );
           shader.vertexShader = shader.vertexShader.replace(
             "#include <begin_vertex>",
-            `
-              #include <begin_vertex>
-              vCubeLocalPosition = position;
-            `,
+            `#include <begin_vertex>
+     vCubeLocalPosition = position;`,
           );
-
-          shader.uniforms.uMatcap = {value: roughness3};
-          shader.uniforms.uNoiseStrength = {value: 0.4};
-          shader.uniforms.uFresnelStrength = {value: 0.7};
-          shader.fragmentShader =
-            `
-            uniform sampler2D uMatcap;
-            uniform float uNoiseStrength;
-            uniform float uFresnelStrength;
-            varying vec3 vCubeLocalPosition;
-
-            float wallHash(vec3 p) {
-              p = fract(p * 0.3183099 + 0.1);
-              p *= 17.0;
-              return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
-            }
-          ` + shader.fragmentShader;
 
           shader.fragmentShader = shader.fragmentShader.replace(
-            "#include <opaque_fragment>",
+            "#include <common>",
+            `#include <common>
+     uniform sampler2D uMatcap;
+     uniform float uNoiseStrength;
+     uniform float uFresnelStrength;
+     varying vec3 vCubeLocalPosition;
+     float wallHash(vec3 p) {
+       p = fract(p * 0.3183099 + 0.1);
+       p *= 17.0;
+       return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+     }`,
+          );
+
+          shader.fragmentShader = shader.fragmentShader.replace(
+            "#include <dithering_fragment>",
             `
-              #include <opaque_fragment>
-
-              vec3 n = normalize(normal);
-              vec3 v = normalize(vViewPosition);
-              vec2 uv = n.xy * 0.495 + 0.5;
-              vec3 mc = texture2D(uMatcap, uv).rgb;
-              vec3 standardLighting = gl_FragColor.rgb;
-
-              // matcap SUTIL — não manda no miolo
-              gl_FragColor.rgb = mix( standardLighting, standardLighting * (0.35 + mc * 1.2), 0.08 );
-              gl_FragColor.rgb += mc * 0.03;
-              float grain = wallHash(vCubeLocalPosition * 8.0);
-              float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
-              float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
-              gl_FragColor.rgb *= grainFactor;
-              gl_FragColor.rgb += vec3(fresnel * 0.06);
-
-              
-            `,
+     vec3 n = normalize(normal);
+     vec3 v = normalize(vViewPosition);
+     vec2 uv = n.xy * 0.495 + 0.5;
+     vec3 mc = texture2D(uMatcap, uv).rgb;
+     vec3 standardLighting = gl_FragColor.rgb;
+     
+     gl_FragColor.rgb = mix(standardLighting, standardLighting * (0.35 + mc * 1.2), 0.42);
+     gl_FragColor.rgb += mc * 0.03;
+     
+     float grain = wallHash(vCubeLocalPosition * 8.0);
+     float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
+     
+     float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
+     gl_FragColor.rgb *= grainFactor;
+     gl_FragColor.rgb += vec3(fresnel * 0.12);
+     #include <dithering_fragment>
+    `,
           );
         };
-        //
-        // gl_FragColor.rgb += vec3(fresnel * 0.12);
 
-        mat.customProgramCacheKey = () => "wall-stack-v4";
+        mat.customProgramCacheKey = () => "wall-stack-v8";
         return mat;
       })(),
     };
