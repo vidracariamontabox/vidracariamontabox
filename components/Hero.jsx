@@ -24,6 +24,20 @@ function makeRng(seed) {
   };
 }
 
+function CursorLight({cursorWorldPos}) {
+  const lightRef = useRef();
+
+  useFrame(() => {
+    if (!lightRef.current) return;
+    lightRef.current.position.x = cursorWorldPos.x;
+    lightRef.current.position.y = cursorWorldPos.y;
+    lightRef.current.position.z = 4;
+    lightRef.current.intensity = cursorWorldPos.active * 4.5;
+  });
+
+  return <pointLight ref={lightRef} color="#c3ff00" intensity={0} distance={12} decay={2} />;
+}
+
 function CubeGrid({cursorWorldPos}) {
   const {viewport} = useThree();
   const cubesRef = useRef([]);
@@ -56,6 +70,8 @@ function CubeGrid({cursorWorldPos}) {
           shader.uniforms.uMatcap = {value: roughness3};
           shader.uniforms.uNoiseStrength = {value: 0.22};
           shader.uniforms.uFresnelStrength = {value: 0.55};
+          shader.uniforms.uCols = {value: cols};
+          shader.uniforms.uRows = {value: rows};
 
           shader.vertexShader = shader.vertexShader.replace(
             "#include <common>",
@@ -86,26 +102,34 @@ function CubeGrid({cursorWorldPos}) {
             "#include <dithering_fragment>",
             `
      vec3 n = normalize(normal);
-     vec3 v = normalize(vViewPosition);
-     vec2 uv = n.xy * 0.495 + 0.5;
-     vec3 mc = texture2D(uMatcap, uv).rgb;
-     vec3 standardLighting = gl_FragColor.rgb;
-     
-     gl_FragColor.rgb = mix(standardLighting, standardLighting * (0.35 + mc * 1.2), 0.42);
-     gl_FragColor.rgb += mc * 0.03;
-     
-     float grain = wallHash(vCubeLocalPosition * 8.0);
-     float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
-     
-     float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
-     gl_FragColor.rgb *= grainFactor;
-     gl_FragColor.rgb += vec3(fresnel * 0.12);
-     #include <dithering_fragment>
+    vec3 v = normalize(vViewPosition);
+    vec2 uv = n.xy * 0.495 + 0.5;
+    vec3 mc = texture2D(uMatcap, uv).rgb;
+    vec3 standardLighting = gl_FragColor.rgb;
+
+    gl_FragColor.rgb = mix(standardLighting, standardLighting * (0.35 + mc * 1.2), 0.42);
+    gl_FragColor.rgb += mc * 0.03;
+
+    float grain = wallHash(vCubeLocalPosition * 8.0);
+    float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
+    float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
+    gl_FragColor.rgb *= grainFactor;
+    gl_FragColor.rgb += vec3(fresnel * 0.12);
+
+    // Mapa claro/escuro espacial
+    float nx = (vCubeLocalPosition.x + float(uCols) * 0.5) / float(uCols);
+    float ny = (vCubeLocalPosition.y + float(uRows) * 0.5) / float(uRows);
+    float topLeft = exp(-((nx - 0.0) * (nx - 0.0) / 0.18 + (ny - 1.0) * (ny - 1.0) / 0.18)) * 0.55;
+    float centerDark = exp(-((nx - 0.5) * (nx - 0.5) / 0.12 + (ny - 0.5) * (ny - 0.5) / 0.18)) * 0.45;
+    gl_FragColor.rgb += vec3(topLeft);
+    gl_FragColor.rgb *= (1.0 - centerDark);
+
+    #include <dithering_fragment>
     `,
           );
         };
 
-        mat.customProgramCacheKey = () => "wall-stack-v8";
+        mat.customProgramCacheKey = () => "wall-stack-v9";
         return mat;
       })(),
     };
@@ -176,7 +200,7 @@ function CubeGrid({cursorWorldPos}) {
     });
 
     animatedCubesRef.current = animatedCubes;
-  }, [cols, rows]);
+  }, [cols, rows, cubeData]);
 
   /* ── Frame loop: animação + reação ao cursor ── */
   useFrame((state) => {
@@ -248,7 +272,7 @@ function CameraRig() {
    coordenadas de mundo e expõe via ref mutável
    ───────────────────────────────────────────── */
 function CursorTracker({mousePos, cursorWorldPos}) {
-  const {camera} = useThree();
+  const {camera, invalidate} = useThree();
   const targetRef = useRef({x: 0, y: 0});
 
   useEffect(() => {
@@ -271,6 +295,7 @@ function CursorTracker({mousePos, cursorWorldPos}) {
     cursorWorldPos.active += (1 - cursorWorldPos.active) * 0.08;
     cursorWorldPos.x += (targetRef.current.x - cursorWorldPos.x) * 0.08;
     cursorWorldPos.y += (targetRef.current.y - cursorWorldPos.y) * 0.08;
+    invalidate();
   });
 
   return null;
@@ -331,12 +356,14 @@ export default function Hero() {
           <ambientLight intensity={0.95} color="#1A1A1A" />
           <directionalLight position={[0, 20, 10]} intensity={2.4} color="#B5B5B5" />
           <CameraRig />
+
           <CursorTracker mousePos={mouse} cursorWorldPos={cursorWorldPos} />
-          <GlowCursor mousePos={mouse} />
+          {/* <GlowCursor mousePos={mouse} /> */}
+          <CursorLight cursorWorldPos={cursorWorldPos} />
           <CubeGrid cursorWorldPos={cursorWorldPos} />
         </Suspense>
-      </Canvas>
-
+      </Canvas>{" "}
+      {/* <GlowCursor mousePos={mouse} /> */}
       {/* Vinheta suave e elegante para profundidade, sem sufocar a geometria 3D */}
       <div
         className="pointer-events-none absolute inset-0 z-[2]"
@@ -349,7 +376,6 @@ export default function Hero() {
           )`,
         }}
       />
-
       {/* ── Vinheta azulada nos cantos (cor/glow, sem blur) ── 
       <div
         className="absolute inset-0 z-[2] pointer-events-none"
@@ -363,11 +389,9 @@ export default function Hero() {
           ].join(", "),
         }}
       />*/}
-
       {/* Passo 4: Overlays SVG de linhas arquitetônicas removidos.
           O Spline original NÃO usa esses elementos — toda a estética
           vem do material 3D, iluminação e chanfros. */}
-
       <div className="absolute top-1/2 left-4 right-auto -translate-y-1/2 z-10 pointer-events-none flex flex-col items-start text-left gap-6 sm:left-[clamp(1.5rem,3vw,3rem)] sm:gap-[2.75rem] w-[calc(100%-2rem)] sm:w-auto max-w-[min(42rem,90vw)]">
         <h1
           className="font-ivy-presto text-[clamp(3.3rem,12vw,4.8rem)] sm:text-[clamp(3rem,4.7vw+1.4rem,6.4rem)] font-bold tracking-[0.01em] sm:tracking-[0.03em] text-[#eaeaea] leading-[0.92] sm:leading-[0.95] m-0 max-w-[13ch] sm:max-w-none"
@@ -388,14 +412,12 @@ export default function Hero() {
           <span>Solicite seu orçamento →</span>
         </a>
       </div>
-
       <div
         className="absolute bottom-[clamp(3.3rem,16.5vh,7.6rem)] left-4 sm:bottom-[clamp(3rem,8vh,6rem)] sm:left-[clamp(1.5rem,3vw,3rem)] z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.63rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#b0b0b0] uppercase w-max max-w-[90vw] whitespace-nowrap"
         style={{textShadow: "0 1px 6px rgba(0,0,0,0.9)"}}>
         <span className="h-px w-8 bg-[#8d8d8d]/60" />
         <span>Vidraçaria · Serralheria · Alto padrão</span>
       </div>
-
       <div className="absolute bottom-5 left-1/2 -translate-x-1/2 sm:bottom-[clamp(1.5rem,4vh,3rem)] sm:left-auto sm:right-[clamp(1.5rem,3vw,3rem)] sm:translate-x-0 z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.48rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#8d8d8d] uppercase max-w-[38vw] justify-end text-right">
         <span>Scroll para explorar</span>
         <span className="h-7 sm:h-10 w-px bg-[#b7b1ab]/60" />
