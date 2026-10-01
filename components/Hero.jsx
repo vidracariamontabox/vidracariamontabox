@@ -31,7 +31,7 @@ function CursorLight({cursorWorldPos}) {
     if (!lightRef.current) return;
     lightRef.current.position.x = cursorWorldPos.x;
     lightRef.current.position.y = cursorWorldPos.y;
-    lightRef.current.position.z = 4;
+    lightRef.current.position.z = -2;
     lightRef.current.intensity = cursorWorldPos.active * 4.5;
   });
 
@@ -68,20 +68,23 @@ function CubeGrid({cursorWorldPos}) {
 
         mat.onBeforeCompile = (shader) => {
           shader.uniforms.uMatcap = {value: roughness3};
-          shader.uniforms.uNoiseStrength = {value: 0.22};
-          shader.uniforms.uFresnelStrength = {value: 0.55};
-          shader.uniforms.uCols = {value: cols};
-          shader.uniforms.uRows = {value: rows};
+
+          shader.uniforms.uViewW = {value: viewport.width};
+          shader.uniforms.uViewH = {value: viewport.height};
+          mat.userData.uViewW = shader.uniforms.uViewW;
+          mat.userData.uViewH = shader.uniforms.uViewH;
 
           shader.vertexShader = shader.vertexShader.replace(
             "#include <common>",
             `#include <common>
-     varying vec3 vCubeLocalPosition;`,
+     varying vec3 vCubeLocalPosition;
+     varying vec3 vWorldPos;`,
           );
           shader.vertexShader = shader.vertexShader.replace(
             "#include <begin_vertex>",
             `#include <begin_vertex>
-     vCubeLocalPosition = position;`,
+     vCubeLocalPosition = position;
+     vWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;`,
           );
 
           shader.fragmentShader = shader.fragmentShader.replace(
@@ -90,7 +93,10 @@ function CubeGrid({cursorWorldPos}) {
      uniform sampler2D uMatcap;
      uniform float uNoiseStrength;
      uniform float uFresnelStrength;
+     uniform float uViewW;
+     uniform float uViewH;
      varying vec3 vCubeLocalPosition;
+     varying vec3 vWorldPos;
      float wallHash(vec3 p) {
        p = fract(p * 0.3183099 + 0.1);
        p *= 17.0;
@@ -102,38 +108,60 @@ function CubeGrid({cursorWorldPos}) {
             "#include <dithering_fragment>",
             `
      vec3 n = normalize(normal);
-    vec3 v = normalize(vViewPosition);
-    vec2 uv = n.xy * 0.495 + 0.5;
-    vec3 mc = texture2D(uMatcap, uv).rgb;
-    vec3 standardLighting = gl_FragColor.rgb;
+     vec3 v = normalize(vViewPosition);
+     vec2 uv = n.xy * 0.495 + 0.5;
+     vec3 mc = texture2D(uMatcap, uv).rgb;
+     vec3 standardLighting = gl_FragColor.rgb;
 
-    gl_FragColor.rgb = mix(standardLighting, standardLighting * (0.35 + mc * 1.2), 0.42);
-    gl_FragColor.rgb += mc * 0.03;
+     gl_FragColor.rgb = mix(standardLighting, standardLighting * (0.35 + mc * 1.2), 0.42);
+     gl_FragColor.rgb += mc * 0.03;
 
-    float grain = wallHash(vCubeLocalPosition * 8.0);
-    float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
-    float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
-    gl_FragColor.rgb *= grainFactor;
-    gl_FragColor.rgb += vec3(fresnel * 0.12);
+     float grain = wallHash(vCubeLocalPosition * 8.0);
+     float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
+     float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
+     gl_FragColor.rgb *= grainFactor;
+     gl_FragColor.rgb += vec3(fresnel * 0.12);
+     
+     float nx = clamp(vWorldPos.x / max(uViewW, 0.001) + 0.5, 0.0, 1.0);
+     float ny = clamp(vWorldPos.y / max(uViewH, 0.001) + 0.5, 0.0, 1.0);
 
-    // Mapa claro/escuro espacial
-    float nx = (vCubeLocalPosition.x + float(uCols) * 0.5) / float(uCols);
-    float ny = (vCubeLocalPosition.y + float(uRows) * 0.5) / float(uRows);
-    float topLeft = exp(-((nx - 0.0) * (nx - 0.0) / 0.18 + (ny - 1.0) * (ny - 1.0) / 0.18)) * 0.55;
-    float centerDark = exp(-((nx - 0.5) * (nx - 0.5) / 0.12 + (ny - 0.5) * (ny - 0.5) / 0.18)) * 0.45;
-    gl_FragColor.rgb += vec3(topLeft);
-    gl_FragColor.rgb *= (1.0 - centerDark);
+     float cheekLX = 0.08;
+     float cheekLY = 0.96;
+     float cheekRX = 0.92;
+     float cheekRY = 0.96;
+     float moonX   = 0.50;
+     float moonY   = 0.03;
 
-    #include <dithering_fragment>
+     float cheekL = exp(-pow((nx - cheekLX) / 0.20, 2.0) - pow((ny - cheekLY) / 0.28, 2.0));
+     float cheekR = exp(-pow((nx - cheekRX) / 0.20, 2.0) - pow((ny - cheekRY) / 0.28, 2.0));
+     float moon   = exp(-pow((nx - moonX) / 0.26, 2.0) - pow((ny - moonY) / 0.14, 2.0));
+
+     float strapL = exp(-pow((nx - 0.22) / 0.10, 2.0) - pow((ny - 0.45) / 0.16, 2.0));
+     float strapR = exp(-pow((nx - 0.78) / 0.10, 2.0) - pow((ny - 0.45) / 0.32, 2.0));
+     
+     float openings = max(max(cheekL, cheekR), moon);
+     float fabric = 1.0 - smoothstep(0.05, 0.42, openings);
+
+     vec3 cool = vec3(0.72, 0.82, 0.95);
+     gl_FragColor.rgb *= mix(1.0, 0.16, fabric);
+     gl_FragColor.rgb += cool * (cheekL * 0.58 + cheekR * 0.40 + moon * 0.24);
+
+     #include <dithering_fragment>
     `,
           );
         };
 
-        mat.customProgramCacheKey = () => "wall-stack-v9";
+        mat.customProgramCacheKey = () => "wall-stack-v19";
         return mat;
       })(),
     };
   }, [roughness3]);
+
+  useEffect(() => {
+    if (!material?.userData.uViewW) return;
+    material.userData.uViewW.value = viewport.width;
+    material.userData.uViewH.value = viewport.height;
+  }, [material, viewport.width, viewport.height]);
 
   /* ── Dados dos cubos: posição, rotação, brilho, material individual ── */
   const cubeData = useMemo(() => {
@@ -188,7 +216,7 @@ function CubeGrid({cursorWorldPos}) {
       child.userData.animated = false;
     });
 
-    const axes = ["x", "y"];
+    const axes = ["x", "y", "z"];
 
     shuffled.slice(0, animCount).forEach((child, i) => {
       child.userData.animated = true;
@@ -213,7 +241,7 @@ function CubeGrid({cursorWorldPos}) {
       const delta = Math.sin(t * speed + phase) * amplitude;
       if (axis === "x") child.position.x = child.userData.originX + delta;
       else if (axis === "y") child.position.y = child.userData.originY + delta;
-      else child.position.z = child.userData.originZ + delta;
+      else if (axis === "z") child.position.z = child.userData.originZ + delta;
     });
 
     // Reação ao cursor: cubos próximos sobem levemente em Z
@@ -353,8 +381,8 @@ export default function Hero() {
         style={{position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1}}>
         <Suspense fallback={null}>
           {/* Iluminação do cenário extraída fielmente do Spline */}
-          <ambientLight intensity={0.95} color="#1A1A1A" />
-          <directionalLight position={[0, 20, 10]} intensity={2.4} color="#B5B5B5" />
+          <ambientLight intensity={0.4} color="#3a3a3a" />
+          <directionalLight position={[0, 20, 10]} intensity={3.5} color="#B5B5B5" />
           <CameraRig />
 
           <CursorTracker mousePos={mouse} cursorWorldPos={cursorWorldPos} />
