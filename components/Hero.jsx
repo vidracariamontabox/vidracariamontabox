@@ -122,36 +122,36 @@ function CubeGrid({cursorWorldPos}) {
      gl_FragColor.rgb *= grainFactor;
      gl_FragColor.rgb += vec3(fresnel * 0.12);
      
+     // Coordenadas de tela normalizadas
      float nx = clamp(vWorldPos.x / max(uViewW, 0.001) + 0.5, 0.0, 1.0);
      float ny = clamp(vWorldPos.y / max(uViewH, 0.001) + 0.5, 0.0, 1.0);
 
-     float cheekLX = 0.08;
-     float cheekLY = 0.96;
-     float cheekRX = 0.92;
-     float cheekRY = 0.96;
-     float moonX   = 0.50;
-     float moonY   = 0.03;
+     float cheekL = exp(-pow((nx - 0.0) / 0.30, 2.0) - pow((ny - 1.0) / 0.45, 2.0));
+     float cheekR = exp(-pow((nx - 1.0) / 0.35, 2.0) - pow((ny - 1.0) / 0.55, 2.0));
 
-     float cheekL = exp(-pow((nx - cheekLX) / 0.20, 2.0) - pow((ny - cheekLY) / 0.28, 2.0));
-     float cheekR = exp(-pow((nx - cheekRX) / 0.20, 2.0) - pow((ny - cheekRY) / 0.28, 2.0));
-     float moon   = exp(-pow((nx - moonX) / 0.26, 2.0) - pow((ny - moonY) / 0.14, 2.0));
+     float openings = max(cheekL, cheekR * 0.65);
+     float fabric = 1.0 - smoothstep(0.04, 0.38, openings);
 
-     float strapL = exp(-pow((nx - 0.22) / 0.10, 2.0) - pow((ny - 0.45) / 0.16, 2.0));
-     float strapR = exp(-pow((nx - 0.78) / 0.10, 2.0) - pow((ny - 0.45) / 0.32, 2.0));
-     
-     float openings = max(max(cheekL, cheekR), moon);
-     float fabric = 1.0 - smoothstep(0.05, 0.42, openings);
+     float darkBand = exp(-pow((nx - 0.48) / 0.26, 2.0) - pow((ny - 0.78) / 0.48, 2.0));
+     float bottomLeft = (1.0 - ny) * (1.0 - smoothstep(0.0, 0.55, nx));
 
-     vec3 cool = vec3(0.72, 0.82, 0.95);
-     gl_FragColor.rgb *= mix(1.0, 0.16, fabric);
-     gl_FragColor.rgb += cool * (cheekL * 0.58 + cheekR * 0.40 + moon * 0.24);
+     vec3 coolSteel = vec3(0.78, 0.80, 0.82);
 
-     #include <dithering_fragment>
+     gl_FragColor.rgb *= mix(1.0, 0.08, fabric * 0.92);
+     gl_FragColor.rgb *= mix(1.0, 0.03, darkBand);
+     gl_FragColor.rgb *= mix(1.0, 0.22, bottomLeft);
+
+     gl_FragColor.rgb += coolSteel * cheekL * 1.10;
+     gl_FragColor.rgb += coolSteel * cheekR * 0.40;
+
+#include <dithering_fragment>
+
+
     `,
           );
         };
 
-        mat.customProgramCacheKey = () => "wall-stack-v19";
+        mat.customProgramCacheKey = () => "wall-stack-v20";
         return mat;
       })(),
     };
