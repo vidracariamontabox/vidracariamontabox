@@ -1,9 +1,9 @@
 "use client";
 
-import {Suspense, useEffect, useMemo, useRef, useState} from "react";
-import {Canvas, useFrame, useThree, useLoader} from "@react-three/fiber";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
-import {RoundedBoxGeometry} from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import GlowCursor from "@/components/GlowCursor";
 
 const CUBE_SIZE = 1.0;
@@ -24,7 +24,7 @@ function makeRng(seed) {
   };
 }
 
-function CursorLight({cursorWorldPos}) {
+function CursorLight({ cursorWorldPos }) {
   const lightRef = useRef();
 
   useFrame(() => {
@@ -38,8 +38,8 @@ function CursorLight({cursorWorldPos}) {
   return <pointLight ref={lightRef} color="#c3ff00" intensity={0} distance={12} decay={2} />;
 }
 
-function CubeGrid({cursorWorldPos}) {
-  const {viewport} = useThree();
+function CubeGrid({ cursorWorldPos }) {
+  const { viewport } = useThree();
   const cubesRef = useRef([]);
   const animatedCubesRef = useRef([]);
 
@@ -48,8 +48,8 @@ function CubeGrid({cursorWorldPos}) {
   const cols = Math.ceil(viewport.width / STEP) + 6;
   const rows = Math.ceil(viewport.height / STEP) + 6;
 
-  const {geometries, material} = useMemo(() => {
-    if (typeof window === "undefined") return {geometries: null, material: null};
+  const { geometries, material } = useMemo(() => {
+    if (typeof window === "undefined") return { geometries: null, material: null };
 
     const boxGeo = new RoundedBoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, 2, 0.012);
     boxGeo.computeVertexNormals();
@@ -57,7 +57,7 @@ function CubeGrid({cursorWorldPos}) {
     roughness3.colorSpace = THREE.SRGBColorSpace;
 
     return {
-      geometries: {box: boxGeo},
+      geometries: { box: boxGeo },
       material: (() => {
         const mat = new THREE.MeshStandardMaterial({
           color: new THREE.Color("#6c7787"),
@@ -67,10 +67,10 @@ function CubeGrid({cursorWorldPos}) {
         });
 
         mat.onBeforeCompile = (shader) => {
-          shader.uniforms.uMatcap = {value: roughness3};
+          shader.uniforms.uMatcap = { value: roughness3 };
 
-          shader.uniforms.uViewW = {value: viewport.width};
-          shader.uniforms.uViewH = {value: viewport.height};
+          shader.uniforms.uViewW = { value: viewport.width };
+          shader.uniforms.uViewH = { value: viewport.height };
           mat.userData.uViewW = shader.uniforms.uViewW;
           mat.userData.uViewH = shader.uniforms.uViewH;
 
@@ -126,23 +126,31 @@ function CubeGrid({cursorWorldPos}) {
      float nx = clamp(vWorldPos.x / max(uViewW, 0.001) + 0.5, 0.0, 1.0);
      float ny = clamp(vWorldPos.y / max(uViewH, 0.001) + 0.5, 0.0, 1.0);
 
-     float cheekL = exp(-pow((nx - 0.0) / 0.30, 2.0) - pow((ny - 1.0) / 0.45, 2.0));
-     float cheekR = exp(-pow((nx - 1.0) / 0.35, 2.0) - pow((ny - 1.0) / 0.55, 2.0));
+     // === MÉTODO CALCINHA INVERTIDA ===
+     // Nádega esquerda (canto superior esquerdo)
+     float cheekL = exp(-pow((nx - 0.0) / 0.30, 2.0) - pow((ny - 1.0) / 0.34, 2.0));
+     // Nádega direita — alça mais levantada, mostra mais bunda
+     float cheekR = exp(-pow((nx - 1.0) / 0.36, 2.0) - pow((ny - 1.0) / 0.48, 2.0));
 
-     float openings = max(cheekL, cheekR * 0.65);
-     float fabric = 1.0 - smoothstep(0.04, 0.38, openings);
+     // Máximo das duas nádegas
+     float openings = max(cheekL, cheekR);
+     // Transição suave bright → dark
+     float splashBright = smoothstep(0.06, 0.45, openings);
 
-     float darkBand = exp(-pow((nx - 0.48) / 0.26, 2.0) - pow((ny - 0.78) / 0.48, 2.0));
-     float bottomLeft = (1.0 - ny) * (1.0 - smoothstep(0.0, 0.55, nx));
+     // Profundidade variável: centro é o ponto mais negro
+     float centerDepth = exp(-pow((nx - 0.46) / 0.32, 2.0) - pow((ny - 0.45) / 0.30, 2.0));
+     // Piso de escuridão: 0.12 nas bordas → 0.05 no centro profundo
+     float darkFloor = mix(0.12, 0.05, centerDepth);
+
+     // Máscara unificada — SEM stacking de multiplicadores
+     float splashMult = mix(darkFloor, 1.0, splashBright);
+     gl_FragColor.rgb *= splashMult;
 
      vec3 coolSteel = vec3(0.78, 0.80, 0.82);
 
-     gl_FragColor.rgb *= mix(1.0, 0.08, fabric * 0.92);
-     gl_FragColor.rgb *= mix(1.0, 0.03, darkBand);
-     gl_FragColor.rgb *= mix(1.0, 0.22, bottomLeft);
-
-     gl_FragColor.rgb += coolSteel * cheekL * 1.10;
-     gl_FragColor.rgb += coolSteel * cheekR * 0.40;
+     // Brilho nas nádegas (temporário, será substituído pelo matcap)
+     gl_FragColor.rgb += coolSteel * cheekL * 1.05;
+     gl_FragColor.rgb += coolSteel * cheekR * 0.60;
 
 #include <dithering_fragment>
 
@@ -151,7 +159,7 @@ function CubeGrid({cursorWorldPos}) {
           );
         };
 
-        mat.customProgramCacheKey = () => "wall-stack-v20";
+        mat.customProgramCacheKey = () => "wall-stack-v21";
         return mat;
       })(),
     };
@@ -237,7 +245,7 @@ function CubeGrid({cursorWorldPos}) {
     // Animação de flutuação
     animatedCubesRef.current.forEach((child) => {
       if (!child) return;
-      const {axis, phase, speed, amplitude} = child.userData;
+      const { axis, phase, speed, amplitude } = child.userData;
       const delta = Math.sin(t * speed + phase) * amplitude;
       if (axis === "x") child.position.x = child.userData.originX + delta;
       else if (axis === "y") child.position.y = child.userData.originY + delta;
@@ -287,7 +295,7 @@ function CubeGrid({cursorWorldPos}) {
 }
 
 function CameraRig() {
-  const {camera} = useThree();
+  const { camera } = useThree();
   useEffect(() => {
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
@@ -299,9 +307,9 @@ function CameraRig() {
    CursorTracker: converte posição do mouse em
    coordenadas de mundo e expõe via ref mutável
    ───────────────────────────────────────────── */
-function CursorTracker({mousePos, cursorWorldPos}) {
-  const {camera, invalidate} = useThree();
-  const targetRef = useRef({x: 0, y: 0});
+function CursorTracker({ mousePos, cursorWorldPos }) {
+  const { camera, invalidate } = useThree();
+  const targetRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     if (mousePos.x === -999) return;
@@ -330,13 +338,13 @@ function CursorTracker({mousePos, cursorWorldPos}) {
 }
 
 export default function Hero() {
-  const [mouse, setMouse] = useState({x: -999, y: -999});
+  const [mouse, setMouse] = useState({ x: -999, y: -999 });
   const [isHeroActive, setIsHeroActive] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const sectionRef = useRef(null);
 
   // Objeto mutável compartilhado entre CursorTracker e CubeGrid
-  const cursorWorldPos = useMemo(() => ({x: 0, y: 0, active: 0}), []);
+  const cursorWorldPos = useMemo(() => ({ x: 0, y: 0, active: 0 }), []);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -366,19 +374,19 @@ export default function Hero() {
       id="hero"
       onMouseMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
-        setMouse({x: e.clientX - rect.left, y: e.clientY - rect.top});
+        setMouse({ x: e.clientX - rect.left, y: e.clientY - rect.top });
       }}
       onMouseLeave={() => {
-        setMouse({x: -999, y: -999});
+        setMouse({ x: -999, y: -999 });
       }}
       className="relative w-full overflow-hidden bg-[#080808] h-dvh min-h-dvh max-h-dvh">
       <Canvas
         orthographic
         frameloop={isHeroActive && !prefersReducedMotion ? "always" : "never"}
         dpr={[1, 1.5]}
-        gl={{alpha: true}}
-        camera={{position: [0, 0, 100], zoom: 80, near: 0.1, far: 500}}
-        style={{position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1}}>
+        gl={{ alpha: true }}
+        camera={{ position: [0, 0, 100], zoom: 80, near: 0.1, far: 500 }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1 }}>
         <Suspense fallback={null}>
           {/* Iluminação do cenário extraída fielmente do Spline */}
           <ambientLight intensity={0.4} color="#3a3a3a" />
@@ -423,12 +431,12 @@ export default function Hero() {
       <div className="absolute top-1/2 left-4 right-auto -translate-y-1/2 z-10 pointer-events-none flex flex-col items-start text-left gap-6 sm:left-[clamp(1.5rem,3vw,3rem)] sm:gap-[2.75rem] w-[calc(100%-2rem)] sm:w-auto max-w-[min(42rem,90vw)]">
         <h1
           className="font-ivy-presto text-[clamp(3.3rem,12vw,4.8rem)] sm:text-[clamp(3rem,4.7vw+1.4rem,6.4rem)] font-bold tracking-[0.01em] sm:tracking-[0.03em] text-[#eaeaea] leading-[0.92] sm:leading-[0.95] m-0 max-w-[13ch] sm:max-w-none"
-          style={{textShadow: "0 2px 12px rgba(0,0,0,0.90), 0 1px 3px rgba(0,0,0,0.95)"}}>
+          style={{ textShadow: "0 2px 12px rgba(0,0,0,0.90), 0 1px 3px rgba(0,0,0,0.95)" }}>
           Seu projeto é nosso projeto
         </h1>
         <p
           className="font-ivy-presto text-[clamp(0.95rem,3.8vw,1.1rem)] sm:text-[clamp(1.05rem,1.5vw+0.4rem,1.1rem)] font-bold tracking-[0.06em] sm:tracking-[0.08em] leading-[1.35] text-[#d0cbc5] m-0 max-w-[24rem] sm:max-w-[30rem]"
-          style={{textShadow: "0 1px 8px rgba(0,0,0,0.85)"}}>
+          style={{ textShadow: "0 1px 8px rgba(0,0,0,0.85)" }}>
           Criamos como se fosse para nossa casa !
         </p>
 
@@ -442,7 +450,7 @@ export default function Hero() {
       </div>
       <div
         className="absolute bottom-[clamp(3.3rem,16.5vh,7.6rem)] left-4 sm:bottom-[clamp(3rem,8vh,6rem)] sm:left-[clamp(1.5rem,3vw,3rem)] z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.63rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#b0b0b0] uppercase w-max max-w-[90vw] whitespace-nowrap"
-        style={{textShadow: "0 1px 6px rgba(0,0,0,0.9)"}}>
+        style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
         <span className="h-px w-8 bg-[#8d8d8d]/60" />
         <span>Vidraçaria · Serralheria · Alto padrão</span>
       </div>
