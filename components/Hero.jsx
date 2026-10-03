@@ -70,7 +70,7 @@ function CubeGrid({cursorWorldPos}) {
           shader.uniforms.uMatcap = {value: roughness3};
           shader.uniforms.uViewW = {value: viewport.width};
           shader.uniforms.uViewH = {value: viewport.height};
-          shader.uniforms.uNoiseStrength = {value: 0.55};
+          shader.uniforms.uNoiseStrength = {value: 0.25};
           shader.uniforms.uFresnelStrength = {value: 0.55};
           mat.userData.uViewW = shader.uniforms.uViewW;
           mat.userData.uViewH = shader.uniforms.uViewH;
@@ -126,29 +126,30 @@ function CubeGrid({cursorWorldPos}) {
     float nx = clamp(vWorldPos.x / max(uViewW, 0.001) + 0.5, 0.0, 1.0);
     float ny = clamp(vWorldPos.y / max(uViewH, 0.001) + 0.5, 0.0, 1.0);
 
-    float cheekL = exp(-pow((nx - 0.0) / 0.28, 2.0) - pow((ny - 1.0) / 0.52, 2.0));
+    float cheekL = exp(-pow((nx - 0.0) / 0.28, 2.0) - pow((ny - 1.0) / 0.65, 2.0));
 
     // [1] direita mais pra direita, menos aberta: 0.70→0.82, spread -0.16→-0.10
-    float cheekR = exp(-pow((nx - 1.0) / 0.22, 2.0) - pow((ny - 1.0) / 0.68, 2.0));
+    float cheekR = exp(-pow((nx - 1.0) / 0.42, 2.0) - pow((ny - 1.0) / 0.58, 2.0));
     
     // [2] arco menor: x-spread 0.40→0.28
     float moon = exp(-pow((nx - 0.50) / 0.28, 2.0) - pow((ny - 0.02) / 0.16, 2.0));
 
-    float hole = exp(-pow((nx - 0.46) / 0.22, 2.0) - pow((ny - 0.86) / 0.30, 2.0));
+    float hole = exp(-pow((nx - 0.54) / 0.38, 2.0) - pow((ny - 0.50) / 0.45, 2.0));
     float bottomLeft = (1.0 - ny) * (1.0 - smoothstep(0.0, 0.42, nx));
 
     float openings = max(max(cheekL, cheekR * 0.70), moon * 0.40);
     float splashBright = smoothstep(0.05, 0.40, openings);
 
     // [3] centro mais escuro: 0.34→0.28, 0.04→0.02
-    float darkFloor = mix(0.38, 0.28, hole);
-    darkFloor *= mix(1.0, 0.40, bottomLeft);
+    float darkFloor = mix(0.68, 0.06, hole);
+    darkFloor *= mix(1.0, 0.65, bottomLeft);
+
 
     float splashMult = mix(darkFloor, 1.0, splashBright);
     gl_FragColor.rgb *= splashMult;
 
     vec3 coolSteel = vec3(0.78, 0.80, 0.82);
-    gl_FragColor.rgb += coolSteel * cheekL * 1.05;
+    gl_FragColor.rgb *= mix(1.0, 5.5, cheekL * 0.85);
     gl_FragColor.rgb += coolSteel * cheekR * 0.48;
     gl_FragColor.rgb += coolSteel * moon * 0.18;
 
