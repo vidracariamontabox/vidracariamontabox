@@ -109,58 +109,61 @@ function CubeGrid({cursorWorldPos}) {
             "#include <dithering_fragment>",
             `
      vec3 n = normalize(normal);
-     vec3 v = normalize(vViewPosition);
-     vec2 uv = n.xy * 0.495 + 0.5;
-     vec3 mc = texture2D(uMatcap, uv).rgb;
-     vec3 standardLighting = gl_FragColor.rgb;
+vec3 v = normalize(vViewPosition);
+vec2 uv = n.xy * 0.495 + 0.5;
+vec3 mc = texture2D(uMatcap, uv).rgb;
+vec3 standardLighting = gl_FragColor.rgb;
 
-     gl_FragColor.rgb = mix(standardLighting, standardLighting + mc * 0.55, 0.32);
-    gl_FragColor.rgb += mc * 0.12;
+gl_FragColor.rgb = mix(standardLighting, standardLighting + mc * 0.55, 0.32);
+gl_FragColor.rgb += mc * 0.12;
 
-     float grain = wallHash(vCubeLocalPosition * 8.0);
-     float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
-     float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
-     gl_FragColor.rgb *= grainFactor;
-     gl_FragColor.rgb += vec3(fresnel * 0.00, fresnel * 0.14, fresnel * 0.45);
-     
-    float nx = clamp(vWorldPos.x / max(uViewW, 0.001) + 0.5, 0.0, 1.0);
-    float ny = clamp(vWorldPos.y / max(uViewH, 0.001) + 0.5, 0.0, 1.0);
+float grain = wallHash(vCubeLocalPosition * 8.0);
+float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
+float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0) * uFresnelStrength;
+gl_FragColor.rgb *= grainFactor;
+gl_FragColor.rgb += vec3(fresnel * 0.00, fresnel * 0.14, fresnel * 0.45);
 
-    // Brilho sup-esq
-    float cheekL = exp(-pow((nx - 0.0) / 0.50, 2.0) - pow((ny - 1.0) / 0.75, 2.0));
+float nx = clamp(vWorldPos.x / max(uViewW, 0.001) + 0.5, 0.0, 1.0);
+float ny = clamp(vWorldPos.y / max(uViewH, 0.001) + 0.5, 0.0, 1.0);
 
-    //Brilho sup-dir + alça direita — concentrado na borda superior direita
-    float rightEdge = mix(0.78, 0.96, 1.0 - ny);
-    
-    // alça direita: reta teto → Scroll
-    float cheekR = smoothstep(rightEdge - 0.28, rightEdge + 0.06, nx);
+// SPLASH TELA INTEIRA
+float hole = exp(-pow((nx - 0.5) / 0.30, 2.0) - pow((ny - 0.6) / 0.75, 2.0));
+float darkFloor = mix(0.75, 0.02, hole);
+gl_FragColor.rgb *= darkFloor;
 
-    // Brilho inf-centro
-    float moon = exp(-pow((nx - 0.50) / 0.28, 2.0) - pow((ny - 0.02) / 0.16, 2.0));
+// Brilho Esquerdo-Direito-Meio
+float cheekL = exp(-pow((nx - 0.0) / 0.56, 3.0) - pow((ny - 2.0) / 0.55, 2.0));
+float rightEdge = mix(0.78, 0.96, 1.0 - ny);
+float moon = exp(-pow((nx - 0.50) / 0.28, 2.0) - pow((ny - 0.02) / 0.16, 2.0));
+float cheekR = smoothstep(rightEdge - 0.28, rightEdge + 0.06, nx);
 
-    float hole = exp(-pow((nx - 0.48) / 0.24, 2.0) - pow((ny - 0.82) / 0.32, 2.0));
-    float bottomLeft = (1.0 - ny) * (1.0 - smoothstep(0.0, 0.42, nx));
+float rimBoost = mix(1.0, 2.5, hole);
 
-    float openings = max(max(cheekL, cheekR * 0.75), moon * 0.35);
-    float splashBright = smoothstep(0.05, 0.42, openings);
+gl_FragColor.rgb += vec3(
+  fresnel * 0.00,
+  fresnel * 0.14,
+  fresnel * 0.45
+) * rimBoost;
 
-    float darkFloor = mix(0.28, 0.03, hole);
-    darkFloor *= mix(1.0, 0.22, bottomLeft);
+// float openings = max(max(cheekL, cheekR * 0.75), moon * 0.35);
+// float splashBright = smoothstep(0.05, 0.42, openings);
+// float bottomLeft = 0.0;
 
-    float splashMult = mix(darkFloor, 1.0, splashBright);
-    gl_FragColor.rgb *= splashMult;
 
-    vec3 coolSteel = vec3(0.78, 0.80, 0.82);
-    gl_FragColor.rgb += coolSteel * cheekL * 0.62 * mix(0.10, 1.0, smoothstep(0.05, 0.38, ny));
-    gl_FragColor.rgb += coolSteel * cheekR * 0.20;
-    gl_FragColor.rgb += coolSteel * moon * 0.16;
+// float splashMult = mix(darkFloor, 1.0, splashBright);
+// gl_FragColor.rgb *= splashMult;
+
+vec3 coolSteel = vec3(0.78, 0.80, 0.82);
+// gl_FragColor.rgb += coolSteel * cheekL * 0.62 * mix(0.10, 1.0, smoothstep(0.05, 0.38, ny));
+// gl_FragColor.rgb += coolSteel * cheekR * 0.20;
+// gl_FragColor.rgb += coolSteel * moon * 0.16;
 
 #include <dithering_fragment>
     `,
           );
         };
 
-        mat.customProgramCacheKey = () => "wall-stack-v31";
+        mat.customProgramCacheKey = () => "wall-stack-v323";
         return mat;
       })(),
     };
