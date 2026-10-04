@@ -60,7 +60,7 @@ function CubeGrid({cursorWorldPos}) {
       geometries: {box: boxGeo},
       material: (() => {
         const mat = new THREE.MeshStandardMaterial({
-          color: new THREE.Color("#6c7787"),
+          color: new THREE.Color("#9aa0a8"),
           metalness: 0.08,
           roughness: 0.55,
           envMapIntensity: 0,
@@ -70,7 +70,7 @@ function CubeGrid({cursorWorldPos}) {
           shader.uniforms.uMatcap = {value: roughness3};
           shader.uniforms.uViewW = {value: viewport.width};
           shader.uniforms.uViewH = {value: viewport.height};
-          shader.uniforms.uNoiseStrength = {value: 0.25};
+          shader.uniforms.uNoiseStrength = {value: 0.34};
           shader.uniforms.uFresnelStrength = {value: 0.55};
           mat.userData.uViewW = shader.uniforms.uViewW;
           mat.userData.uViewH = shader.uniforms.uViewH;
@@ -114,8 +114,8 @@ function CubeGrid({cursorWorldPos}) {
      vec3 mc = texture2D(uMatcap, uv).rgb;
      vec3 standardLighting = gl_FragColor.rgb;
 
-     gl_FragColor.rgb = mix(standardLighting, standardLighting * (0.35 + mc * 1.2), 0.42);
-     gl_FragColor.rgb += mc * 0.03;
+     gl_FragColor.rgb = mix(standardLighting, standardLighting + mc * 0.55, 0.32);
+    gl_FragColor.rgb += mc * 0.12;
 
      float grain = wallHash(vCubeLocalPosition * 8.0);
      float grainFactor = mix(1.0 - 0.28 * uNoiseStrength, 1.0 + 0.28 * uNoiseStrength, grain);
@@ -126,39 +126,41 @@ function CubeGrid({cursorWorldPos}) {
     float nx = clamp(vWorldPos.x / max(uViewW, 0.001) + 0.5, 0.0, 1.0);
     float ny = clamp(vWorldPos.y / max(uViewH, 0.001) + 0.5, 0.0, 1.0);
 
-    float cheekL = exp(-pow((nx - 0.0) / 0.28, 2.0) - pow((ny - 1.0) / 0.65, 2.0));
+    // Brilho sup-esq
+    float cheekL = exp(-pow((nx - 0.0) / 0.50, 2.0) - pow((ny - 1.0) / 0.75, 2.0));
 
-    // [1] direita mais pra direita, menos aberta: 0.70→0.82, spread -0.16→-0.10
-    float cheekR = exp(-pow((nx - 1.0) / 0.42, 2.0) - pow((ny - 1.0) / 0.58, 2.0));
+    //Brilho sup-dir + alça direita — concentrado na borda superior direita
+    float rightEdge = mix(0.78, 0.96, 1.0 - ny);
     
-    // [2] arco menor: x-spread 0.40→0.28
+    // alça direita: reta teto → Scroll
+    float cheekR = smoothstep(rightEdge - 0.28, rightEdge + 0.06, nx);
+
+    // Brilho inf-centro
     float moon = exp(-pow((nx - 0.50) / 0.28, 2.0) - pow((ny - 0.02) / 0.16, 2.0));
 
-    float hole = exp(-pow((nx - 0.54) / 0.38, 2.0) - pow((ny - 0.50) / 0.45, 2.0));
+    float hole = exp(-pow((nx - 0.48) / 0.24, 2.0) - pow((ny - 0.82) / 0.32, 2.0));
     float bottomLeft = (1.0 - ny) * (1.0 - smoothstep(0.0, 0.42, nx));
 
-    float openings = max(max(cheekL, cheekR * 0.70), moon * 0.40);
-    float splashBright = smoothstep(0.05, 0.40, openings);
+    float openings = max(max(cheekL, cheekR * 0.75), moon * 0.35);
+    float splashBright = smoothstep(0.05, 0.42, openings);
 
-    // [3] centro mais escuro: 0.34→0.28, 0.04→0.02
-    float darkFloor = mix(0.68, 0.06, hole);
-    darkFloor *= mix(1.0, 0.65, bottomLeft);
-
+    float darkFloor = mix(0.28, 0.03, hole);
+    darkFloor *= mix(1.0, 0.22, bottomLeft);
 
     float splashMult = mix(darkFloor, 1.0, splashBright);
     gl_FragColor.rgb *= splashMult;
 
     vec3 coolSteel = vec3(0.78, 0.80, 0.82);
-    gl_FragColor.rgb *= mix(1.0, 5.5, cheekL * 0.85);
-    gl_FragColor.rgb += coolSteel * cheekR * 0.48;
-    gl_FragColor.rgb += coolSteel * moon * 0.18;
+    gl_FragColor.rgb += coolSteel * cheekL * 0.62 * mix(0.10, 1.0, smoothstep(0.05, 0.38, ny));
+    gl_FragColor.rgb += coolSteel * cheekR * 0.20;
+    gl_FragColor.rgb += coolSteel * moon * 0.16;
 
-    #include <dithering_fragment>
+#include <dithering_fragment>
     `,
           );
         };
 
-        mat.customProgramCacheKey = () => "wall-stack-v22";
+        mat.customProgramCacheKey = () => "wall-stack-v31";
         return mat;
       })(),
     };
@@ -389,7 +391,7 @@ export default function Hero() {
         <Suspense fallback={null}>
           {/* Iluminação do cenário extraída fielmente do Spline */}
           <ambientLight intensity={0.4} color="#3a3a3a" />
-          <directionalLight position={[0, 20, 10]} intensity={3.5} color="#B5B5B5" />
+          <directionalLight position={[0, 20, 10]} intensity={3.0} color="#B5B5B5" />
           <CameraRig />
 
           <CursorTracker mousePos={mouse} cursorWorldPos={cursorWorldPos} />
