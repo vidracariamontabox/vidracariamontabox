@@ -127,30 +127,34 @@ float nx = clamp(vWorldPos.x / max(uViewW, 0.001) + 0.5, 0.0, 1.0);
 float ny = clamp(vWorldPos.y / max(uViewH, 0.001) + 0.5, 0.0, 1.0);
 
 // SPLASH TELA INTEIRA
-float hole = exp(-pow((nx - 0.5) / 0.30, 2.0) - pow((ny - 0.6) / 0.75, 2.0));
-float darkFloor = mix(0.75, 0.02, hole);
-gl_FragColor.rgb *= darkFloor;
+    float hole = exp(-pow((nx - 0.5) / 0.30, 2.0) - pow((ny - 0.6) / 0.75, 2.0));
+    float darkFloor = mix(0.75, 0.02, hole);
+    gl_FragColor.rgb *= darkFloor;
 
 // Brilho Esquerdo-Direito-Meio
-float cheekL = exp(-pow((nx - 0.0) / 0.56, 3.0) - pow((ny - 2.0) / 0.55, 2.0));
-float rightEdge = mix(0.78, 0.96, 1.0 - ny);
-float moon = exp(-pow((nx - 0.50) / 0.28, 2.0) - pow((ny - 0.02) / 0.16, 2.0));
-float cheekR = smoothstep(rightEdge - 0.28, rightEdge + 0.06, nx);
+    float cheekL = exp(-pow((nx - 0.0) / 0.50, 2.0) - pow((ny - 1.0) / 0.50, 2.0));
+    cheekL *= smoothstep(0.26, 0.42, ny);
+    
+    float rightEdge = mix(0.84, 0.95, 1.0 - ny);
+      float rightFade = mix(0.10, 0.28, ny);
+      rightEdge += 0.06 * exp(-pow((ny - 0.60) / 0.31, 2.0));
+      float cheekR = smoothstep(rightEdge - rightFade, rightEdge + 0.04, nx);
+    
+    float moon = exp(-pow((nx - 0.50) / 0.18, 2.0) - pow((ny - 0.02) / 0.12, 2.0));
+    
+    float restore = max(max(cheekL, cheekR * 0.30), moon * 0.40);
+    gl_FragColor.rgb *= mix(1.0, 5.0, restore);
+    float rimBoost = mix(1.0, 2.5, hole);
+    gl_FragColor.rgb += vec3(fresnel * 0.00, fresnel * 0.14, fresnel * 0.45) * rimBoost;
 
-float rimBoost = mix(1.0, 2.5, hole);
+// Chanfros
+    gl_FragColor.rgb += vec3(
+    fresnel * 0.00,
+    fresnel * 0.14,
+    fresnel * 0.45
+    ) * rimBoost;
 
-gl_FragColor.rgb += vec3(
-  fresnel * 0.00,
-  fresnel * 0.14,
-  fresnel * 0.45
-) * rimBoost;
-
-// float openings = max(max(cheekL, cheekR * 0.75), moon * 0.35);
-// float splashBright = smoothstep(0.05, 0.42, openings);
 // float bottomLeft = 0.0;
-
-
-// float splashMult = mix(darkFloor, 1.0, splashBright);
 // gl_FragColor.rgb *= splashMult;
 
 vec3 coolSteel = vec3(0.78, 0.80, 0.82);
@@ -163,7 +167,7 @@ vec3 coolSteel = vec3(0.78, 0.80, 0.82);
           );
         };
 
-        mat.customProgramCacheKey = () => "wall-stack-v323";
+        mat.customProgramCacheKey = () => "wall-stack-v36";
         return mat;
       })(),
     };
@@ -453,12 +457,12 @@ export default function Hero() {
         </a>
       </div>
       <div
-        className="absolute bottom-[clamp(3.3rem,16.5vh,7.6rem)] left-4 sm:bottom-[clamp(3rem,8vh,6rem)] sm:left-[clamp(1.5rem,3vw,3rem)] z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.63rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#b0b0b0] uppercase w-max max-w-[90vw] whitespace-nowrap"
+        className="absolute bottom-[clamp(3.3rem,16.5vh,7.6rem)] left-4 sm:bottom-[clamp(3rem,8vh,6rem)] sm:left-[clamp(1.5rem,3vw,3rem)] z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.63rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#fff] uppercase w-max max-w-[90vw] whitespace-nowrap"
         style={{textShadow: "0 1px 6px rgba(0,0,0,0.9)"}}>
-        <span className="h-px w-8 bg-[#8d8d8d]/60" />
+        <span className="h-px w-8 bg-[#fff]/60" />
         <span>Vidraçaria · Serralheria · Alto padrão</span>
       </div>
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 sm:bottom-[clamp(1.5rem,4vh,3rem)] sm:left-auto sm:right-[clamp(1.5rem,3vw,3rem)] sm:translate-x-0 z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.48rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#8d8d8d] uppercase max-w-[38vw] justify-end text-right">
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 sm:bottom-[clamp(1.5rem,4vh,3rem)] sm:left-1/2 sm:-translate-x-1/2 z-10 pointer-events-none flex items-center gap-2 sm:gap-3 font-neuehaas text-[0.48rem] sm:text-[0.55rem] tracking-[0.16em] sm:tracking-[0.24em] text-[#fff] uppercase max-w-[38vw] justify-center text-center">
         <span>Scroll para explorar</span>
         <span className="h-7 sm:h-10 w-px bg-[#b7b1ab]/60" />
       </div>
