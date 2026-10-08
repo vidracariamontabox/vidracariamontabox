@@ -8,12 +8,11 @@
   padding: 0 0 56px;
 }
 
-
 .testimonials-section__container {
-  min-height: 100dvh;
+  min-height: auto;
   max-width: 1600px;
   margin: 0 auto;
-  padding: 72px 24px 56px;
+  padding: 64px 32px 10px;
 }
 
 .testimonials-section__header {
@@ -81,7 +80,7 @@
   order: 2;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .testimonial-company-list {
@@ -358,7 +357,8 @@
 
 @media (min-width: 1024px) {
   .testimonials-section__title {
-    grid-column: 2 / span 5;
+    grid-column: 2 / span 7;
+    white-space: nowrap;
   }
 
   .testimonials-section__introWrap {

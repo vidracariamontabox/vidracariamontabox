@@ -7,6 +7,27 @@ import TestimonialCard from "./TestimonialCard";
 import {TestimonialsData} from "../../data/TestimonialsData";
 import WordShiftButton from "../ui/WordShiftButton";
 
+function interleaveByReviewType(data) {
+  const byType = new Map();
+  for (const item of data) {
+    if (!byType.has(item.reviewType)) byType.set(item.reviewType, []);
+    byType.get(item.reviewType).push(item);
+  }
+  const types = [...byType.keys()];
+  const maxLen = Math.max(...types.map((type) => byType.get(type).length));
+  const out = [];
+  for (let i = 0; i < maxLen; i++) {
+    for (const type of types) {
+      const item = byType.get(type)[i];
+      if (item) out.push(item);
+    }
+  }
+  return out;
+}
+
+const slides = interleaveByReviewType(TestimonialsData);
+const reviewTypes = [...new Set(TestimonialsData.map((item) => item.reviewType))];
+
 export default function Testimonials({customClass = "", showBottomLine = false, onPreloadNext}) {
   const sectionRef = useRef(null);
   const nextPreloadTriggeredRef = useRef(false);
@@ -18,15 +39,15 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
     setDirection(newDirection);
     setActiveIndex((prevIndex) => {
       let nextIndex = prevIndex + newDirection;
-      if (nextIndex < 0) nextIndex = TestimonialsData.length - 1;
-      if (nextIndex >= TestimonialsData.length) nextIndex = 0;
+      if (nextIndex < 0) nextIndex = slides.length - 1;
+      if (nextIndex >= slides.length) nextIndex = 0;
       return nextIndex;
     });
   }, []);
 
   const handleCompanyClick = useCallback(
-    (companyName) => {
-      const targetIndex = TestimonialsData.findIndex((item) => item.companyName === companyName);
+    (reviewType) => {
+      const targetIndex = slides.findIndex((item) => item.reviewType === reviewType);
       if (targetIndex !== -1 && targetIndex !== activeIndex) {
         setDirection(targetIndex > activeIndex ? 1 : -1);
         setActiveIndex(targetIndex);
@@ -120,16 +141,16 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
         <div className="testimonials-section__main">
           <div className="testimonials-section__left">
             <div className="testimonial-company-list">
-              {[...new Set(TestimonialsData.map((item) => item.companyName))].map((companyName) => {
-                const isActive = TestimonialsData[activeIndex]?.companyName === companyName;
+              {reviewTypes.map((reviewType) => {
+                const isActive = slides[activeIndex]?.reviewType === reviewType;
                 return (
                   <button
-                    key={companyName}
+                    key={reviewType}
                     type="button"
                     aria-current={isActive ? "true" : undefined}
                     className={`testimonial-company-button ${isActive ? "is-active" : ""}`}
-                    onClick={() => handleCompanyClick(companyName)}>
-                    <span className="title">{companyName}</span>
+                    onClick={() => handleCompanyClick(reviewType)}>
+                    <span className="title">{reviewType}</span>
                     <span className={`icon ${isActive ? "is-visible" : ""}`} aria-hidden="true">
                       →
                     </span>
@@ -181,7 +202,7 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
                     }
                   }}
                   className="w-full">
-                  <TestimonialCard item={TestimonialsData[activeIndex]} />
+                  <TestimonialCard item={slides[activeIndex]} />
                 </motion.div>
               </AnimatePresence>
             </div>

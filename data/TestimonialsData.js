@@ -1,6 +1,6 @@
 export const TestimonialsData = [
   {
-    companyName: "Qualidade do material",
+    reviewType: "Qualidade do material",
     clientName: "Gustavo Salomão",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -9,7 +9,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Qualidade do material",
+    reviewType: "Qualidade do material",
     clientName: "Claudia B.",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -18,7 +18,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Qualidade do material",
+    reviewType: "Qualidade do material",
     clientName: "Guilherme Daneze",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -27,7 +27,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Qualidade do material",
+    reviewType: "Qualidade do material",
     clientName: "Nome do CLiente",
     clientDeg: "Cliente ou nome da empresa",
     clientImage: "/images/placeholder.webp",
@@ -36,7 +36,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Acabamento",
+    reviewType: "Acabamento",
     clientName: "Victoria De Bonis",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -45,7 +45,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Acabamento",
+    reviewType: "Acabamento",
     clientName: "Barbara Salioni",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -54,7 +54,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Acabamento",
+    reviewType: "Acabamento",
     clientName: "Milena Govoni",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -63,7 +63,7 @@ export const TestimonialsData = [
   },
 
   // {
-  //   companyName: "Acabamento",
+  //   reviewType: "Acabamento",
   //   clientName: "Andre de Souza Maria",
   //   clientDeg: "Grupo André Maria",
   //   clientImage: "/images/Logo-3-grupoandremaria.webp",
@@ -72,7 +72,7 @@ export const TestimonialsData = [
   // },
 
   {
-    companyName: "Esquadrias",
+    reviewType: "Esquadrias",
     clientName: "Junior Mazza",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -81,7 +81,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Esquadrias",
+    reviewType: "Esquadrias",
     clientName: "Mauro Nunes Pereira Junior",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -90,7 +90,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Esquadrias",
+    reviewType: "Esquadrias",
     clientName: "Bruna Tarina",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -99,7 +99,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Esquadrias",
+    reviewType: "Esquadrias",
     clientName: "Claudia Goncalves de Souza",
     clientDeg: "Construtora & Incorporadora Souza Maria",
     clientImage: "/images/Logo-4-ibis.webp",
@@ -108,7 +108,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Cumpre o que promete",
+    reviewType: "Cumpre o que promete",
     clientName: "Pinotti Maquinas",
     clientDeg: "Empresário",
     clientImage: "/images/placeholder.webp",
@@ -117,7 +117,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Cumpre o que promete",
+    reviewType: "Cumpre o que promete",
     clientName: "André Fávaro",
     clientDeg: "Dr. Oftalmologista - Franca-SP",
     clientImage: "/images/Logo-2-favaro.webp",
@@ -126,7 +126,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Cumpre o que promete",
+    reviewType: "Cumpre o que promete",
     clientName: "Sacha Breckenfeld Reck",
     clientDeg: "Tennessee Steak House - Ribeirão Preto-SP",
     clientImage: "/images/Logo-6-tenesse.webp",
@@ -135,7 +135,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Profissionais",
+    reviewType: "Profissionais",
     clientName: "Cassio Fouad",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -144,7 +144,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Profissionais",
+    reviewType: "Profissionais",
     clientName: "Mateus Eduardo Rodrigues",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -153,7 +153,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Profissionais",
+    reviewType: "Profissionais",
     clientName: "Cristiane Freitas",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -162,7 +162,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Profissionais",
+    reviewType: "Profissionais",
     clientName: "Manuela Masso",
     clientDeg: "S. proprietária da Artemper Distribuidora de Vidros",
     clientImage: "/images/Logo-5-artemper.webp",
@@ -171,7 +171,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Excelência",
+    reviewType: "Excelência",
     clientName: "Maria M.",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -180,7 +180,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Excelência",
+    reviewType: "Excelência",
     clientName: "Fuad Saud",
     clientDeg: "Cliente",
     clientImage: "/images/placeholder.webp",
@@ -189,7 +189,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Excelência",
+    reviewType: "Excelência",
     clientName: "Naur",
     clientDeg: "Biofarm Tecnologia em Veterinária",
     clientImage: "/images/Logo-1-biofarm2.webp",
@@ -198,7 +198,7 @@ export const TestimonialsData = [
   },
 
   {
-    companyName: "Excelência",
+    reviewType: "Excelência",
     clientName: "Claudionor Santana",
     clientDeg: "Oxiquímica Agrociência",
     clientImage: "/images/Logo-5-oxiquimica.webp",

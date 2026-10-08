@@ -3,10 +3,7 @@
 import dynamic from "next/dynamic";
 import SectionLoadGate from "../SectionLoadGate";
 
-const Testimonials = dynamic(
-  () => import("./Testimonials"),
-  {ssr: false},
-);
+const Testimonials = dynamic(() => import("./Testimonials"), {ssr: false});
 
 export default function LazyTestimonials({load = false, onPreloadNext}) {
   return (
