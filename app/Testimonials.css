@@ -1,8 +1,6 @@
 .testimonials-section {
   position: relative;
   z-index: 20;
-  max-height: 120vh;
-  overflow: hidden;
   background: linear-gradient(0deg, #acaba9 0%, #ffffff 100%);
   color: #272727;
   padding: 0 0 56px;
@@ -306,8 +304,6 @@
 }
 
 @media (max-width: 767px) {
-
-  /* Reduza width e height aqui para diminuir o clientImage no mobile. */
   .testimonial-item__avatar {
     width: 50px;
     height: 50px;

@@ -14,6 +14,7 @@ gsap.registerPlugin(ScrollTrigger);
 const IMAGES = [
   {
     src: "/images/obra-1-oxquimica.webp",
+    srcMobile: "/images/obra-1-oxquimica.webp",
     alt: "Oxíquimica",
     title: "Oxíquimica",
     year: "2023",
@@ -21,6 +22,7 @@ const IMAGES = [
   },
   {
     src: "/images/obra-2-porta-ripado.webp",
+    srcMobile: "/images/obra-2-porta-ripado.webp",
     alt: "Porta Ripado",
     title: "Residência Privada",
     year: "2024",
@@ -28,6 +30,7 @@ const IMAGES = [
   },
   {
     src: "/images/obra-3-centro-emprestarial.webp",
+    srcMobile: "/images/obra-3-centro-emprestarial.webp",
     alt: "Centro empresarial",
     title: "Hotel Íbis",
     year: "2023",
@@ -35,6 +38,7 @@ const IMAGES = [
   },
   {
     src: "/images/obra-4-favaro.webp",
+    srcMobile: "/images/obra-4-favaro.webp",
     alt: "Clínica médica",
     title: "Clínica Fávaro",
     year: "2024",
@@ -42,6 +46,7 @@ const IMAGES = [
   },
   {
     src: "/images/obra-5-casa-condominio.webp",
+    srcMobile: "/images/obra-5-casa-condominio.webp",
     alt: "Condomínio",
     title: "Condomínio Luxo",
     year: "2023",
@@ -49,6 +54,7 @@ const IMAGES = [
   },
   {
     src: "/images/obra-6-casa-condominio.webp",
+    srcMobile: "/images/obra-6-casa-condominio.webp",
     alt: "Residencia",
     title: "Residência Completa",
     year: "2024",
@@ -56,6 +62,7 @@ const IMAGES = [
   },
   {
     src: "/images/obra-7-magalu.webp",
+    srcMobile: "/images/obra-7-magalu.webp",
     alt: "Magalu",
     title: "Magalu Corporate",
     year: "2023",
@@ -63,6 +70,7 @@ const IMAGES = [
   },
   {
     src: "/images/obra-8-athenas.webp",
+    srcMobile: "/images/obra-8-athenas.webp",
     alt: "Athenas",
     title: "Edifício Athenas",
     year: "2024",
@@ -299,7 +307,7 @@ export default function WorkAndServices({onPreloadNext}) {
               <div
                 ref={(el) => (cardInnerRefs.current[i + 1] = el)}
                 className="flex flex-col items-center w-full will-change-transform px-2 sm:px-0">
-                <div className="relative w-full sm:w-[95%] aspect-[640/439] group overflow-hidden bg-zinc-900 border border-white/5 rounded-[5px]">
+                <div className="relative w-[80%] mx-auto sm:w-[45%] aspect-[9/16] lg:w-[95%] lg:aspect-[640/439] group overflow-hidden bg-zinc-900 border border-white/5 rounded-[5px]">
                   <Image
                     src={img.src}
                     alt={img.alt}

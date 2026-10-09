@@ -443,7 +443,7 @@ export default function Hero() {
           Seu projeto é nosso projeto
         </h1>
         <p
-          className="font-ivy-presto text-[clamp(0.95rem,3.8vw,1.1rem)] sm:text-[clamp(1.05rem,1.5vw+0.4rem,1.1rem)] font-bold tracking-[0.06em] sm:tracking-[0.08em] leading-[1.35] text-[#d0cbc5] m-0 max-w-[24rem] sm:max-w-[30rem]"
+          className="font-ivy-presto text-[clamp(1rem,2.6vw+0.6rem,1.35rem)] sm:text-[clamp(1.05rem,1.5vw+0.4rem,1.25rem)] font-bold tracking-[0.06em] sm:tracking-[0.08em] leading-[1.35] text-[#d0cbc5] m-0 max-w-[24rem] sm:max-w-[30rem]"
           style={{textShadow: "0 1px 8px rgba(0,0,0,0.85)"}}>
           Criamos como se fosse para nossa casa !
         </p>
