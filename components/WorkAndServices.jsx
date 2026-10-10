@@ -307,7 +307,7 @@ export default function WorkAndServices({onPreloadNext}) {
               <div
                 ref={(el) => (cardInnerRefs.current[i + 1] = el)}
                 className="flex flex-col items-center w-full will-change-transform px-2 sm:px-0">
-                <div className="relative w-[80%] mx-auto sm:w-[45%] aspect-[9/16] lg:w-[95%] lg:aspect-[640/439] group overflow-hidden bg-zinc-900 border border-white/5 rounded-[5px]">
+                <div className="relative w-[80%] mx-auto sm:w-[90%] aspect-[9/16] lg:w-[95%] lg:aspect-[640/439] group overflow-hidden bg-zinc-900 border border-white/5 rounded-[5px]">
                   <Image
                     src={img.src}
                     alt={img.alt}
