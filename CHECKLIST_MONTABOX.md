@@ -62,8 +62,7 @@ Não instalar Google Analytics, Tag Manager, Meta Pixel nem outro rastreador ant
 - [x] **Política de privacidade**: página publicada no site (quem é a Montabox, quais dados, para quê, contato).
 - [x] **Política de cookies**: só se for usar cookie de analytics, publicidade ou preferência. Se o site não gravar cookie nenhum, registrar isso na privacidade e pular o banner.
 - [x] **Banner / painel** (`components/CookieConsent.jsx`, se for o caso): aceitar, recusar e guardar a escolha em cookie ou `localStorage`.
-- [ ] Script de analytics **só depois** da autorização.
-- [ ] Ponto global: `app/layout.jsx` (metadata + consentimento). Não criar `sw.js` por causa de rastreio — Service Worker é cache/offline, outra coisa.
+- [x] Ponto global: `app/layout.jsx` (metadata + consentimento). Não criar `sw.js` por causa de rastreio — Service Worker é cache/offline, outra coisa.
 
 Arquivos que entram quando o rastreio for ligado:
 
@@ -85,7 +84,8 @@ Arquivos que entram quando o rastreio for ligado:
 - [ ] Carregar o script só com consentimento.
 - [ ] Atualizar a CSP (continua em Report-Only até o console ficar limpo; aí vira `Content-Security-Policy`).
 - [ ] Conferir que, sem aceitar, o script **não** dispara.
-- [ ] Code precisa ser adaptado para cookies junto com GA4
+- [ ] Adaptar o CookieBanner para carregar o GA4 só após aceite.
+- [ ] Script de analytics **só depois** da autorização.
 
 Hoje não há rastreador neste projeto.
 
