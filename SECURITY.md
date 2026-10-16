@@ -6,23 +6,23 @@ Ordem de prioridade: resolver de cima para baixo.
 
 ## Prioridade 1: Contas (2FA)
 
-- [ ] **GitHub**: confirmar 2FA com passkey na conta pessoal.
-- [ ] **Vercel**: confirmar 2FA na conta pessoal, além do team.
-- [ ] **Registrador do domínio**: ativar 2FA e bloqueio de transferência.
-- [ ] **Recovery codes**: gerar e guardar GitHub, Vercel e registrador fora do computador.
+- [x] **GitHub**: confirmar 2FA com passkey na conta pessoal.
+- [x] **Vercel**: confirmar 2FA na conta pessoal, além do team.
+- [x] **Registrador do domínio**: ativar 2FA e bloqueio de transferência.
+- [x] **Recovery codes**: gerar e guardar GitHub, Vercel e registrador fora do computador.
 
 ## Prioridade 2: Repositório
 
-- [ ] **`.gitignore`**: adicionar `.env*` (manter `.env.example` se existir).
-- [ ] **Histórico do Git**: ZIPs antigos (Cables.gl e backups `Trionn/`) continuam no histórico. Inspecionar o conteúdo de `sitetrionn BK.zip` e procurar `.env` ou chaves.
-- [ ] **Revogação**: só se algum segredo for encontrado no histórico. Apagar do Git não invalida a chave, é preciso trocá-la no provedor.
-- [ ] **Dependabot**: ativar alertas e security updates em *Settings → Code security*.
-- [ ] **Dependabot (rotina)**: criar `.github/dependabot.yml` com atualização semanal.
+- [x] **`.gitignore`**: adicionar `.env*` (manter `.env.example` se existir).
+- [x] **Histórico do Git**: ZIPs antigos (Cables.gl e backups `Trionn/`) continuam no histórico. Inspecionar o conteúdo de `sitetrionn BK.zip` e procurar `.env` ou chaves.
+- [x] **Revogação**: só se algum segredo for encontrado no histórico. Apagar do Git não invalida a chave, é preciso trocá-la no provedor.
+- [x] **Dependabot**: ativar alertas e security updates em *Settings → Code security*.
+- [x] **Dependabot (rotina)**: criar `.github/dependabot.yml` com atualização semanal.
 
 ## Prioridade 3: Dependências
 
-- [ ] **`npm audit`**: rodar agora e revisar o que aparecer. Não usar `npm audit fix --force` sem ler antes.
-- [ ] **Testar PRs do Dependabot**: quando mexerem em `three`, `@react-three/fiber`, `next` ou `gsap`, validar o Hero visualmente antes do merge.
+- [x] **`npm audit`**: rodar agora e revisar o que aparecer. Não usar `npm audit fix --force` sem ler antes.
+- [x] **Testar PRs do Dependabot**: quando mexerem em `three`, `@react-three/fiber`, `next` ou `gsap`, validar o Hero visualmente antes do merge.
 
 ## Prioridade 4: Configuração do Next.js
 
