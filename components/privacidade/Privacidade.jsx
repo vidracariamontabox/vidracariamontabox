@@ -78,8 +78,8 @@ export default function Privacidade() {
           <h2 className="text-xl font-medium tracking-tight">5. WhatsApp e links externos</h2>
           <p className="mt-3">
             Botões de WhatsApp, Instagram, Facebook, Pinterest e mapa abrem serviços de terceiros. A conversa no
-            WhatsApp acontece na plataforma da Meta, não neste site: o que você escrever lá segue as regras do
-            WhatsApp. A Montabox usa esses canais para atendimento e orçamento, fora desta página.
+            WhatsApp acontece na plataforma da Meta, não neste site: o que você escrever lá segue as regras do WhatsApp.
+            A Montabox usa esses canais para atendimento e orçamento, fora desta página.
           </p>
         </section>
 

@@ -2,8 +2,10 @@
 
 import {useEffect, useState, useRef} from "react";
 import {motion, AnimatePresence} from "framer-motion";
+import {usePathname} from "next/navigation";
 
 export default function Preloader() {
+  const pathname = usePathname();
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
@@ -11,6 +13,8 @@ export default function Preloader() {
   const rafRef = useRef(null);
 
   useEffect(() => {
+    if (pathname === "/privacidade") return;
+
     let isMounted = true;
     const MIN_TIME = 1800; 
     const start = performance.now();
@@ -70,9 +74,9 @@ export default function Preloader() {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("load", onLoad);
     };
-  }, [isExiting]);
+  }, [isExiting, pathname]);
 
-  if (done) return null;
+  if (pathname === "/privacidade" || done) return null;
 
   return (
     <AnimatePresence onExitComplete={() => setDone(true)}>

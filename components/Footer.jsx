@@ -134,6 +134,9 @@ export default function Footer() {
             <span className="text-[0.6rem] uppercase tracking-[0.2em] text-[#858180]">© {currentYear} Montabox</span>
             <span className="h-1 w-1 rounded-full bg-white/10" />
             <span className="text-[0.6rem] uppercase tracking-[0.2em] text-[#858180]">Vidraçaria e Serralheria</span>
+            <a href="/privacidade" className="text-[0.6rem] uppercase tracking-[0.2em] text-[#858180] hover:text-white">
+              Política de Privacidade
+            </a>
           </div>
 
           <div className="flex items-center gap-2">

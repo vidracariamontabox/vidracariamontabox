@@ -16,7 +16,7 @@ Ordem: de cima para baixo. Não pular uma fase sem motivo.
 - [x] **Recovery codes**: GitHub, Vercel e registrador guardados fora do computador.
 - [x] **`.gitignore`**: `.env*` (manter `.env.example` se existir).
 - [x] **Histórico do Git**: ZIPs antigos (Cables.gl e backups `Trionn/`) inspecionados. Sem `.env` ou chave para revogar.
-- [x] **Dependabot**: alertas e security updates em *Settings → Code security*.
+- [x] **Dependabot**: alertas e security updates em _Settings → Code security_.
 - [x] **Dependabot (rotina)**: `.github/dependabot.yml` com atualização semanal.
 - [x] **`npm audit`**: rodado. Não usar `npm audit fix --force` sem ler antes.
 - [x] **PRs do Dependabot (regra)**: quando mexer em `three`, `@react-three/fiber`, `next` ou `gsap`, validar o Hero visualmente antes do merge.
@@ -32,7 +32,7 @@ O domínio só entra quando o conteúdo visível estiver fechado. Medir performa
 - [ ] **FAQ**: revisar perguntas e respostas. Tirar marcação de rascunho (ex.: “revisar”, “coletar depoimento”) do texto publicado.
 - [ ] **Depoimentos**: conferir se ainda existe texto placeholder (“Coletar depoimento…”, “Nome do Cliente”). O que não estiver real, tira ou substitui.
 - [ ] **Textos institucionais**: Hero, Serviços, Footer, horário, endereço e links (WhatsApp, Instagram, Maps) conferidos.
-- [ ] **Imagens sociais**: Open Graph / ícone prontos, mesmo que a URL absoluta ainda seja a da Vercel.
+- [ ] **Imagens sociais**: Open Graph / ícone prontos, mesmo que a URL absoluta ainda seja a da Vercel.(/images/obra-8-athenas.webp" has "fill" but is missing "sizes" prop. Please add it to improve page performance.)
 
 ---
 
@@ -59,7 +59,7 @@ Rodar no preview da Vercel, desktop e mobile.
 
 Não instalar Google Analytics, Tag Manager, Meta Pixel nem outro rastreador antes disto.
 
-- [ ] **Política de privacidade**: página publicada no site (quem é a Montabox, quais dados, para quê, contato).
+- [x] **Política de privacidade**: página publicada no site (quem é a Montabox, quais dados, para quê, contato).
 - [ ] **Política de cookies**: só se for usar cookie de analytics, publicidade ou preferência. Se o site não gravar cookie nenhum, registrar isso na privacidade e pular o banner.
 - [ ] **Banner / painel** (`components/CookieConsent.jsx`, se for o caso): aceitar, recusar e guardar a escolha em cookie ou `localStorage`.
 - [ ] Script de analytics **só depois** da autorização.
@@ -67,14 +67,14 @@ Não instalar Google Analytics, Tag Manager, Meta Pixel nem outro rastreador ant
 
 Arquivos que entram quando o rastreio for ligado:
 
-| Arquivo ou área | Função |
-|---|---|
-| `components/CookieConsent.jsx` | Banner e preferências. |
-| `app/layout.jsx` | Metadata, consentimento e carga controlada dos scripts. |
-| `public/robots.txt` | Manter o que a política permitir. |
-| `public/llms.txt` | Só se canal oficial ou texto institucional mudar. |
-| Política de privacidade | Antes de ligar qualquer ferramenta. |
-| Política de cookies | Se houver cookie de analytics, anúncio ou preferência. |
+| Arquivo ou área                | Função                                                  |
+| ------------------------------ | ------------------------------------------------------- |
+| `components/CookieConsent.jsx` | Banner e preferências.                                  |
+| `app/layout.jsx`               | Metadata, consentimento e carga controlada dos scripts. |
+| `public/robots.txt`            | Manter o que a política permitir.                       |
+| `public/llms.txt`              | Só se canal oficial ou texto institucional mudar.       |
+| Política de privacidade        | Antes de ligar qualquer ferramenta.                     |
+| Política de cookies            | Se houver cookie de analytics, anúncio ou preferência.  |
 
 ---
 
@@ -123,15 +123,15 @@ public/sitemap.xml
 
 Substituir pelo domínio oficial:
 
-| Arquivo | O que revisar |
-|---|---|
-| `app/layout.jsx` | `metadataBase`, canonical, Open Graph, imagens sociais, qualquer URL absoluta. |
-| `public/robots.txt` | Linha `Sitemap`. |
-| `public/sitemap.xml` | Todos os `<loc>`. |
-| `public/llms.txt` | Página principal, sitemap e links institucionais absolutos. |
-| Componentes | Links absolutos (Instagram, WhatsApp, Maps) só se o canal mudar. |
-| Vercel | Domínio principal, aliases e redirect do domínio antigo. |
-| Rastreio | Propriedade no Analytics, Tag Manager, Search Console e Pixel. |
+| Arquivo              | O que revisar                                                                  |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `app/layout.jsx`     | `metadataBase`, canonical, Open Graph, imagens sociais, qualquer URL absoluta. |
+| `public/robots.txt`  | Linha `Sitemap`.                                                               |
+| `public/sitemap.xml` | Todos os `<loc>`.                                                              |
+| `public/llms.txt`    | Página principal, sitemap e links institucionais absolutos.                    |
+| Componentes          | Links absolutos (Instagram, WhatsApp, Maps) só se o canal mudar.               |
+| Vercel               | Domínio principal, aliases e redirect do domínio antigo.                       |
+| Rastreio             | Propriedade no Analytics, Tag Manager, Search Console e Pixel.                 |
 
 URLs relativas (`/icon.png`, `/images/...`) não mudam. O `metadataBase` resolve o resto.
 
@@ -161,8 +161,8 @@ URLs relativas (`/icon.png`, `/images/...`) não mudam. O `metadataBase` resolve
 - [ ] **Branch de trabalho**: não editar direto na `main`. Uma branch por alteração.
 - [ ] **Preview da Vercel**: testar a URL da branch antes do merge.
 - [ ] **Merge na `main`**: dispara o deploy de produção.
-- [ ] **Rollback**: em *Deployments* na Vercel, promover a versão anterior.
-- [ ] **Variáveis de ambiente**: só em *Settings → Environment Variables* na Vercel, nunca no código.
+- [ ] **Rollback**: em _Deployments_ na Vercel, promover a versão anterior.
+- [ ] **Variáveis de ambiente**: só em _Settings → Environment Variables_ na Vercel, nunca no código.
 
 ---
 
