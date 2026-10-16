@@ -44,7 +44,7 @@ export default function Navbar() {
       ].join(" ")}>
       <motion.a
         variants={itemVariants}
-        href="#"
+        href="/"
         className="text-sm font-light tracking-widest uppercase text-[#acaba9] hover:text-[#eaeaea] transition-colors duration-300">
         Montabox (em desenvolvimento)
       </motion.a>
