@@ -49,10 +49,9 @@ Rodar no preview da Vercel, desktop e mobile.
 
 ## Fase 3 — Configuração do Next que não depende de domínio
 
-- [ ] **`next.config`**: `productionBrowserSourceMaps: false` (hoje publica o código-fonte).
-- [ ] **Cabeçalhos HTTP**: `headers()` com `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` e `Permissions-Policy`.
-- [ ] **CSP**: começar em `Content-Security-Policy-Report-Only`. Olhar o console por alguns dias. **Não** virar bloqueio ainda — o rastreio da Fase 5 muda a política.
-- [ ] **HSTS**: não ativar nesta fase. Só com o domínio final em HTTPS.
+- [x] **`next.config`**: `productionBrowserSourceMaps: false` (hoje publica o código-fonte).
+- [x] **Cabeçalhos HTTP**: `headers()` com `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` e `Permissions-Policy`.
+- [x] **CSP**: começar em `Content-Security-Policy-Report-Only`. Olhar o console por alguns dias. **Não** virar bloqueio ainda — o rastreio da Fase 5 muda a política.
 
 ---
 
@@ -101,6 +100,7 @@ Só depois das fases 1–4 (e 5, se o rastreio for entrar junto com o lançament
 - [ ] Redirecionar `www` ↔ apex (um só canônico).
 - [ ] Confirmar que abre em **HTTPS** sem aviso.
 - [ ] Decidir o que fazer com `vidracariamontabox.vercel.app` (redirect para o domínio novo).
+- [ ] **HSTS**: não ativar nesta fase. Só com o domínio final em HTTPS.
 
 ---
 
