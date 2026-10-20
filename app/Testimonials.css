@@ -174,10 +174,10 @@
 }
 
 .testimonial-item {
-  min-height: 420px;
+  min-height: auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   color: #272727;
 }
 
@@ -205,10 +205,12 @@
 }
 
 .testimonial-item__client {
-  display: flex;
-  align-items: end;
-  gap: 16px;
+  margin: top 32px;
 }
+
+/* display: flex;
+  align-items: end;
+  gap: 16px; */
 
 .testimonial-item__avatar {
   width: 80px;
@@ -346,8 +348,14 @@
     display: none;
   }
 
+  .testimonial-item__company::before {
+    content: "→";
+    margin-right: 8px;
+    color: #acaba9;
+  }
+
   .testimonial-item__quote {
-    margin-bottom: 72px;
+    margin-bottom: 0;
   }
 }
 

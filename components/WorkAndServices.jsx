@@ -84,6 +84,9 @@ export default function WorkAndServices({onPreloadNext}) {
   const trackRef = useRef(null);
   const cardInnerRefs = useRef([]);
   const [isServicesRevealed, setIsServicesRevealed] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : false,
+  );
   const revealedRef = useRef(false);
   const preloadTriggeredRef = useRef(false);
 
@@ -91,159 +94,211 @@ export default function WorkAndServices({onPreloadNext}) {
     cardInnerRefs.current = new Array(IMAGES.length + 2).fill(null);
   }, []);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   useGSAP(
     () => {
       if (!containerRef.current || !trackRef.current || !wrapperRef.current) return;
 
-      const track = trackRef.current;
-      const wrapper = wrapperRef.current;
-      const inners = cardInnerRefs.current.filter(Boolean);
+      const mm = gsap.matchMedia();
 
-      let scrollAmount = 0;
-      let viewportWidth = window.innerWidth;
-      const getScrollAmount = () => scrollAmount;
+      /* ── DESKTOP (1024px+): scroll horizontal com pin ── */
+      mm.add("(min-width: 1024px)", () => {
+        const track = trackRef.current;
+        const wrapper = wrapperRef.current;
+        const inners = cardInnerRefs.current.filter(Boolean);
 
-      const cardMetrics = [];
-      const setInnerY = inners.map((inner) => gsap.quickSetter(inner, "y", "px"));
-      const cacheCardMetrics = () => {
-        inners.forEach((inner, i) => {
-          const card = inner.parentElement;
-          cardMetrics[i] = card ? {left: card.offsetLeft, width: card.offsetWidth} : null;
-        });
-      };
+        let scrollAmount = 0;
+        let viewportWidth = window.innerWidth;
+        const getScrollAmount = () => scrollAmount;
 
-      inners.forEach((inner, i) => {
-        if (i > 1) {
-          gsap.set(inner, {y: 550, opacity: 1});
-        } else {
-          gsap.set(inner, {y: 0, opacity: 1});
-        }
-      });
-
-      const cacheLayoutMetrics = () => {
-        scrollAmount = track.scrollWidth - window.innerWidth;
-        viewportWidth = window.innerWidth;
-        cacheCardMetrics();
-      };
-
-      ScrollTrigger.refresh();
-      cacheLayoutMetrics();
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: () => `+=${window.innerHeight * 6}`,
-          pin: true,
-          pinSpacing: true,
-          scrub: 1.2,
-          invalidateOnRefresh: true,
-          onRefresh: cacheLayoutMetrics,
-          onUpdate: (self) => {
-            if (self.progress >= 0.5 && !preloadTriggeredRef.current) {
-              preloadTriggeredRef.current = true;
-              onPreloadNext?.();
-            }
-
-            const isRevealed = self.progress > 0.88;
-            if (isRevealed !== revealedRef.current) {
-              revealedRef.current = isRevealed;
-              setIsServicesRevealed(isRevealed);
-            }
-          },
-          snap: {
-            snapTo: (rawProgress) => {
-              const phaseStart = 0.2 / 4.2;
-              const phaseEnd = 3.2 / 4.2;
-              if (rawProgress < phaseStart || rawProgress > phaseEnd) return rawProgress;
-
-              const points = cardMetrics
-                .map((m) => {
-                  if (!m) return null;
-                  const targetX = viewportWidth / 2 - (m.left + m.width / 2);
-                  const localT = -targetX / scrollAmount;
-                  return phaseStart + localT * (phaseEnd - phaseStart);
-                })
-                .filter((v) => v !== null);
-
-              return points.reduce((closest, p) =>
-                Math.abs(p - rawProgress) < Math.abs(closest - rawProgress) ? p : closest,
-              );
-            },
-            duration: {min: 0.15, max: 0.4},
-            ease: "power1.inOut",
-          },
-        },
-      });
-
-      tl.to({}, {duration: 0.2});
-
-      tl.to(track, {
-        x: () => -getScrollAmount(),
-        ease: "none",
-        duration: 3,
-        onUpdate: function () {
-          const currentX = -scrollAmount * this.progress();
+        const cardMetrics = [];
+        const setInnerY = inners.map((inner) => gsap.quickSetter(inner, "y", "px"));
+        const cacheCardMetrics = () => {
           inners.forEach((inner, i) => {
-            if (i <= 1) return;
-
-            const metrics = cardMetrics[i];
-            if (!metrics) return;
-
-            const cardLeftInViewport = metrics.left + currentX;
-            const cardWidth = metrics.width;
-
-            const r = (cardLeftInViewport + cardWidth / 2) / viewportWidth;
-
-            let yOffset = 0;
-            if (r > 1.3) {
-              yOffset = 550;
-            } else if (r > 0.7) {
-              const progress = (1.3 - r) / 0.6;
-              yOffset = 550 * (1 - Math.pow(progress, 3));
-            } else {
-              yOffset = 0;
-            }
-
-            const finalY = i === IMAGES.length + 1 ? yOffset - 120 : yOffset;
-
-            setInnerY[i](finalY);
+            const card = inner.parentElement;
+            cardMetrics[i] = card ? {left: card.offsetLeft, width: card.offsetWidth} : null;
           });
-        },
+        };
+
+        inners.forEach((inner, i) => {
+          if (i > 1) {
+            gsap.set(inner, {y: 550, opacity: 1});
+          } else {
+            gsap.set(inner, {y: 0, opacity: 1});
+          }
+        });
+
+        const cacheLayoutMetrics = () => {
+          scrollAmount = track.scrollWidth - window.innerWidth;
+          viewportWidth = window.innerWidth;
+          cacheCardMetrics();
+        };
+
+        ScrollTrigger.refresh();
+        cacheLayoutMetrics();
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top top",
+            end: () => `+=${window.innerHeight * 6}`,
+            pin: true,
+            pinSpacing: true,
+            scrub: 1.2,
+            invalidateOnRefresh: true,
+            onRefresh: cacheLayoutMetrics,
+            onUpdate: (self) => {
+              if (self.progress >= 0.5 && !preloadTriggeredRef.current) {
+                preloadTriggeredRef.current = true;
+                onPreloadNext?.();
+              }
+
+              const isRevealed = self.progress > 0.88;
+              if (isRevealed !== revealedRef.current) {
+                revealedRef.current = isRevealed;
+                setIsServicesRevealed(isRevealed);
+              }
+            },
+            snap: {
+              snapTo: (rawProgress) => {
+                const phaseStart = 0.2 / 4.2;
+                const phaseEnd = 3.2 / 4.2;
+                if (rawProgress < phaseStart || rawProgress > phaseEnd) return rawProgress;
+
+                const points = cardMetrics
+                  .map((m) => {
+                    if (!m) return null;
+                    const targetX = viewportWidth / 2 - (m.left + m.width / 2);
+                    const localT = -targetX / scrollAmount;
+                    return phaseStart + localT * (phaseEnd - phaseStart);
+                  })
+                  .filter((v) => v !== null);
+
+                return points.reduce((closest, p) =>
+                  Math.abs(p - rawProgress) < Math.abs(closest - rawProgress) ? p : closest,
+                );
+              },
+              duration: {min: 0.15, max: 0.4},
+              ease: "power1.inOut",
+            },
+          },
+        });
+
+        tl.to({}, {duration: 0.2});
+
+        tl.to(track, {
+          x: () => -getScrollAmount(),
+          ease: "none",
+          duration: 3,
+          onUpdate: function () {
+            const currentX = -scrollAmount * this.progress();
+            inners.forEach((inner, i) => {
+              if (i <= 1) return;
+
+              const metrics = cardMetrics[i];
+              if (!metrics) return;
+
+              const cardLeftInViewport = metrics.left + currentX;
+              const cardWidth = metrics.width;
+
+              const r = (cardLeftInViewport + cardWidth / 2) / viewportWidth;
+
+              let yOffset = 0;
+              if (r > 1.3) {
+                yOffset = 550;
+              } else if (r > 0.7) {
+                const progress = (1.3 - r) / 0.6;
+                yOffset = 550 * (1 - Math.pow(progress, 3));
+              } else {
+                yOffset = 0;
+              }
+
+              const finalY = i === IMAGES.length + 1 ? yOffset - 120 : yOffset;
+
+              setInnerY[i](finalY);
+            });
+          },
+        });
+
+        tl.to(wrapper, {
+          xPercent: -100,
+          ease: "power2.inOut",
+          duration: 1,
+        });
+
+        return () => {
+          tl.kill();
+          ScrollTrigger.getAll().forEach((t) => t.kill());
+        };
       });
 
-      tl.to(wrapper, {
-        xPercent: -100,
-        ease: "power2.inOut",
-        duration: 1,
+      /* ── MOBILE/TABLET (até 1023px): coluna vertical, sem pin ── */
+      mm.add("(max-width: 1023px)", () => {
+        const preloadSt = ScrollTrigger.create({
+          trigger: containerRef.current,
+          start: "top 80%",
+          once: true,
+          onEnter: () => {
+            if (preloadTriggeredRef.current) return;
+            preloadTriggeredRef.current = true;
+            onPreloadNext?.();
+          },
+        });
+
+        const revealSt = ScrollTrigger.create({
+          trigger: containerRef.current,
+          start: "bottom 80%",
+          onEnter: () => {
+            if (revealedRef.current) return;
+            revealedRef.current = true;
+            setIsServicesRevealed(true);
+          },
+          onLeaveBack: () => {
+            revealedRef.current = false;
+            setIsServicesRevealed(false);
+          },
+        });
+
+        return () => {
+          preloadSt.kill();
+          revealSt.kill();
+        };
       });
 
-      return () => {
-        tl.kill();
-        ScrollTrigger.getAll().forEach((t) => t.kill());
-      };
+      return () => mm.revert();
     },
     {scope: containerRef},
   );
 
   const blockClass =
-    "flex-shrink-0 w-[calc(100vw-2rem)] sm:w-[calc(100vw-3rem)] md:w-[45vw] h-full flex items-center justify-center px-0 sm:px-6 md:px-10 border-r border-white/10";
+    "flex-shrink-0 w-full h-auto flex items-center justify-center py-12 px-0 sm:px-6 md:px-10 border-b border-white/10 lg:w-[45vw] lg:h-full lg:py-0 lg:border-b-0 lg:border-r";
 
   return (
     <section
       ref={containerRef}
-      className="relative w-full h-dvh bg-black overflow-hidden m-0 p-0"
+      className="relative w-full h-auto lg:h-dvh bg-black overflow-hidden m-0 p-0"
       style={{containerType: "inline-size"}}>
-      <div className="absolute inset-0 z-10 overflow-hidden">
-        <div className="h-full w-full">
-          <Services isRevealed={isServicesRevealed} />
+      {isDesktop && (
+        <div className="absolute inset-0 z-10 overflow-hidden">
+          <div className="h-full w-full">
+            <Services isRevealed={isServicesRevealed} />
+          </div>
         </div>
-      </div>
+      )}
 
       <div
         ref={wrapperRef}
-        className="relative w-full h-full bg-gradient-to-r from-black via-[#0a0a0a] to-[#1a1a1a] z-20 will-change-transform overflow-hidden m-0 p-0">
-        <div ref={trackRef} className="flex h-full items-center will-change-transform m-0 p-0">
+        className="relative w-full h-auto lg:h-full bg-gradient-to-r from-black via-[#0a0a0a] to-[#1a1a1a] z-20 lg:will-change-transform overflow-hidden m-0 p-0">
+        <div
+          ref={trackRef}
+          className="flex flex-col w-full h-auto m-0 p-0 lg:flex-row lg:h-full lg:items-center lg:will-change-transform">
           <div className={blockClass}>
             <div
               ref={(el) => (cardInnerRefs.current[0] = el)}
@@ -354,6 +409,12 @@ export default function WorkAndServices({onPreloadNext}) {
             </div>
           </div>
         </div>
+
+        {!isDesktop && (
+          <div className="relative w-full min-h-dvh bg-black">
+            <Services isRevealed={isServicesRevealed} />
+          </div>
+        )}
       </div>
     </section>
   );

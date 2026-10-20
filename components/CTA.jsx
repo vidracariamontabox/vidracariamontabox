@@ -37,6 +37,7 @@ function createPixel(ctx, canvas, x, y, color, baseSpeed, delay) {
     isIdle: false,
     isReverse: false,
     isShimmer: false,
+    shimmerCount: 0,
     draw() {
       const offset = p.maxSizeInt * 0.5 - p.size * 0.5;
       ctx.fillStyle = p.color;
@@ -65,7 +66,14 @@ function createPixel(ctx, canvas, x, y, color, baseSpeed, delay) {
     },
     shimmer() {
       if (p.size >= p.maxSize) p.isReverse = true;
-      else if (p.size <= p.minSize) p.isReverse = false;
+      else if (p.size <= p.minSize) {
+        p.isReverse = false;
+        p.shimmerCount++;
+        if (p.shimmerCount >= 2) {
+          p.isIdle = true;
+          return;
+        }
+      }
       if (p.isReverse) p.size -= p.speed;
       else p.size += p.speed;
     },
@@ -102,8 +110,9 @@ function PixelCanvas({colors, gap = 5, speed = 30}) {
     const effectiveSpeed = reducedMotionRef.current ? 0 : Math.min(speed, 100) * 0.001;
     const pixels = [];
 
-    for (let x = 0; x < w; x += gap) {
-      for (let y = 0; y < h; y += gap) {
+    const g = window.innerWidth < 768 ? Math.max(gap, 10) : gap;
+    for (let x = 0; x < w; x += g) {
+      for (let y = 0; y < h; y += g) {
         const color = colors[Math.floor(Math.random() * colors.length)];
         const dx = x - w / 2;
         const dy = y - h / 2;
@@ -117,7 +126,7 @@ function PixelCanvas({colors, gap = 5, speed = 30}) {
 
   const animate = useCallback((mode) => {
     cancelAnimationFrame(animationRef.current);
-    const frameInterval = 1000 / 60;
+    const frameInterval = 1000 / 30;
 
     const loop = () => {
       if (!isActiveRef.current || document.hidden) {
@@ -167,7 +176,16 @@ function PixelCanvas({colors, gap = 5, speed = 30}) {
     const intersectionObserver = new IntersectionObserver(([entry]) => setActive(entry.isIntersecting), {
       threshold: 0.01,
     });
-    const resizeObserver = new ResizeObserver(() => init());
+
+    let lastW = 0;
+    let resizeTimer;
+    const resizeObserver = new ResizeObserver((entries) => {
+      const w = Math.floor(entries[0].contentRect.width);
+      if (w === lastW) return;
+      lastW = w;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(init, 200);
+    });
 
     if (wrapRef.current) {
       intersectionObserver.observe(wrapRef.current);
@@ -177,12 +195,13 @@ function PixelCanvas({colors, gap = 5, speed = 30}) {
     animate("appear");
 
     return () => {
+      clearTimeout(resizeTimer);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       document.removeEventListener("visibilitychange", visibilityChange);
       cancelAnimationFrame(animationRef.current);
     };
-  }, [init, animate]);
+  }, [init, animate]); // ← esta linha estava faltando
 
   return (
     <div ref={wrapRef} className="absolute inset-0 overflow-hidden">
@@ -278,8 +297,10 @@ export default function CTA({
           isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8",
         )}
         style={{transitionDelay: "600ms"}}>
-        <div className="relative w-full max-w-5xl overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_15%,white_85%,transparent)]">
-          <div className="flex w-max py-3 animate-marquee">
+        <div className="relative w-full max-w-5xl overflow-hidden">
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 z-10 bg-gradient-to-r" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 z-10 bg-gradient-to-l" />
+          <div className="flex w-max py-3 animate-marquee will-change-transform">
             <div className="flex gap-16 pr-16 items-center">
               {PARTNER_LOGOS.map((logo) => (
                 <Image

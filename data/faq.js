@@ -3,7 +3,7 @@ export const faqs = [
     id: 0,
     question: "Qual é o valor do m² da fachada pele de vidro?",
     answer:
-      "Depende muito do sistema a ser utilizado, o valor será na faixa de R$ 1.800 a R$ 2.500 por m² material e mão de obra, custos adiconais como andaimes e viagem precisam ser considerados (valores são exemplos).",
+      "Depende muito do sistema a ser utilizado, o valor será na faixa de R$ 1.800 a R$ 2.500 por m² material e mão de obra, custos adicionais como andaimes e viagem precisam ser considerados (valores são exemplos).",
   },
   {
     id: 1,
