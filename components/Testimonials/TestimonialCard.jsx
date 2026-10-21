@@ -4,7 +4,7 @@ import Image from "next/image";
 export default function TestimonialCard({item}) {
   return (
     <article className="testimonial-item">
-      <span className="testimonial-item__company mobile-only">{item.reviewType}</span>
+      <span className="testimonial-item__company mobile-only"> → {item.reviewType}</span>
 
       <div className="testimonial-item__body">
         <h3 className="testimonial-item__quote">{item.quoteMessage}</h3>

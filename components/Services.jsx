@@ -1,5 +1,5 @@
 "use client";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {motion} from "framer-motion";
 import BlurTextReveal from "./ui/BlurTextReveal";
 
@@ -18,28 +18,46 @@ function CursiveAltoPadrao({play}) {
   );
 }
 
-export default function Services({isRevealed}) {
+export default function Services({isRevealed, inView = false}) {
   const [isHeaderReady, setIsHeaderReady] = useState(false);
+  const headerRef = useRef(null);
 
+  // Desktop: o cabeçalho segue a cortina (isRevealed)
   useEffect(() => {
-    if (isRevealed === undefined) {
-      setIsHeaderReady(true);
-      return;
-    }
+    if (inView) return;
+    setIsHeaderReady(isRevealed === undefined ? true : isRevealed);
+  }, [isRevealed, inView]);
 
-    if (isRevealed) {
-      setIsHeaderReady(true);
-    } else {
-      setIsHeaderReady(false);
-    }
-  }, [isRevealed]);
+  // Mobile: o cabeçalho anima quando entra na tela, com 1s de atraso
+  useEffect(() => {
+    if (!inView || !headerRef.current) return undefined;
+
+    let timer;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        clearTimeout(timer);
+        if (entry.isIntersecting) {
+          timer = setTimeout(() => setIsHeaderReady(true), 1000);
+        } else {
+          setIsHeaderReady(false);
+        }
+      },
+      {threshold: 0.4},
+    );
+
+    observer.observe(headerRef.current);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [inView]);
 
   return (
     <section
       id="servicos"
       className="relative z-10 h-full min-h-screen bg-[#121212] flex flex-col justify-center px-4 py-16 sm:px-6 sm:py-24 md:px-16 lg:px-24">
       <div className="max-w-7xl mx-auto w-full">
-        <div className="mb-12 sm:mb-20 flex items-center justify-center gap-3 sm:gap-6">
+        <div ref={headerRef} className="mb-12 sm:mb-20 flex items-center justify-center gap-3 sm:gap-6">
           <BlurTextReveal
             animationType="chars"
             stagger={0.04}

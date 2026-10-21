@@ -348,14 +348,8 @@
     display: none;
   }
 
-  .testimonial-item__company::before {
-    content: "→";
-    margin-right: 8px;
-    color: #acaba9;
-  }
-
   .testimonial-item__quote {
-    margin-bottom: 0;
+    margin-bottom: 34px;
   }
 }
 

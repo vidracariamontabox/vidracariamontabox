@@ -178,7 +178,7 @@ export default function Testimonials({customClass = "", showBottomLine = false, 
           </div>
 
           <div className="testimonials-section__swiperWrap">
-            <div className="testimonials-swiper-container relative overflow-hidden min-h-[300px]">
+            <div className="testimonials-swiper-container relative overflow-hidden">
               <AnimatePresence initial={false} custom={direction} mode="wait">
                 <motion.div
                   key={activeIndex}

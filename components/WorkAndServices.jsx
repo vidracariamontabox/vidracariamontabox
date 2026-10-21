@@ -252,24 +252,7 @@ export default function WorkAndServices({onPreloadNext}) {
           },
         });
 
-        const revealSt = ScrollTrigger.create({
-          trigger: containerRef.current,
-          start: "bottom 80%",
-          onEnter: () => {
-            if (revealedRef.current) return;
-            revealedRef.current = true;
-            setIsServicesRevealed(true);
-          },
-          onLeaveBack: () => {
-            revealedRef.current = false;
-            setIsServicesRevealed(false);
-          },
-        });
-
-        return () => {
-          preloadSt.kill();
-          revealSt.kill();
-        };
+        return () => preloadSt.kill();
       });
 
       return () => mm.revert();
@@ -412,7 +395,7 @@ export default function WorkAndServices({onPreloadNext}) {
 
         {!isDesktop && (
           <div className="relative w-full min-h-dvh bg-black">
-            <Services isRevealed={isServicesRevealed} />
+            <Services isRevealed={isServicesRevealed} inView />
           </div>
         )}
       </div>
