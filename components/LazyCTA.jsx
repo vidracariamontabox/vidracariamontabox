@@ -7,7 +7,7 @@ const CTA = dynamic(() => import("./CTA"), {ssr: false});
 
 export default function LazyCTA({load = false}) {
   return (
-    <SectionLoadGate load={load} minHeight="auto" rootMargin="100vh 0px">
+    <SectionLoadGate load={load} minHeight="auto" rootMargin="200px 0px">
       <CTA />
     </SectionLoadGate>
   );

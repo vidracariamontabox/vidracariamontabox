@@ -259,7 +259,7 @@ export default function CTA({
       `}</style>
 
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {themeColors.length > 0 && <PixelCanvas colors={themeColors} gap={6} speed={30} />}
+        {themeColors.length > 0 && <PixelCanvas colors={themeColors} gap={10} speed={30} />}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#121212_100%)] pointer-events-none opacity-80" />
       </div>
 
