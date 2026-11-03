@@ -301,7 +301,7 @@ export default function Hero() {
       motionQuery.removeEventListener?.("change", updateMotionPreference);
     };
   }, []);
-
+  /*{isHeroActive && !prefersReducedMotion ? "always" : "never"}*/
   return (
     <section
       ref={sectionRef}
@@ -309,7 +309,7 @@ export default function Hero() {
       className="relative w-full overflow-hidden bg-[#080808] h-dvh min-h-dvh max-h-dvh">
       <Canvas
         orthographic
-        frameloop={isHeroActive && !prefersReducedMotion ? "always" : "never"}
+        frameloop={"always"}
         dpr={[1, 1.5]}
         gl={{alpha: true}}
         camera={{
