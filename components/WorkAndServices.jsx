@@ -350,6 +350,7 @@ export default function WorkAndServices({onPreloadNext}) {
                     src={img.src}
                     alt={img.alt}
                     fill
+                    sizes="(max-width: 1023px) 80vw, 45vw"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-40" />

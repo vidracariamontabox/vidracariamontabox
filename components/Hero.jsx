@@ -4,7 +4,6 @@ import {Suspense, useEffect, useMemo, useRef, useState} from "react";
 import {Canvas, useFrame, useThree, useLoader} from "@react-three/fiber";
 import * as THREE from "three";
 import {RoundedBoxGeometry} from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-import GlowCursor from "@/components/GlowCursor";
 
 const CUBE_SIZE = 1.0;
 const GAP = 0.05;
@@ -24,21 +23,7 @@ function makeRng(seed) {
   };
 }
 
-function CursorLight({cursorWorldPos}) {
-  const lightRef = useRef();
-
-  useFrame(() => {
-    if (!lightRef.current) return;
-    lightRef.current.position.x = cursorWorldPos.x;
-    lightRef.current.position.y = cursorWorldPos.y;
-    lightRef.current.position.z = -2;
-    lightRef.current.intensity = cursorWorldPos.active * 4.5;
-  });
-
-  return <pointLight ref={lightRef} color="#c3ff00" intensity={0} distance={12} decay={2} />;
-}
-
-function CubeGrid({cursorWorldPos}) {
+function CubeGrid() {
   const {viewport} = useThree();
   const cubesRef = useRef([]);
   const animatedCubesRef = useRef([]);
@@ -259,27 +244,6 @@ vec3 coolSteel = vec3(0.78, 0.80, 0.82);
       else if (axis === "y") child.position.y = child.userData.originY + delta;
       else if (axis === "z") child.position.z = child.userData.originZ + delta;
     });
-
-    // Reação ao cursor: cubos próximos sobem levemente em Z
-    if (cursorWorldPos) {
-      const cx = cursorWorldPos.x;
-      const cy = cursorWorldPos.y;
-      const active = cursorWorldPos.active;
-      const RADIUS = 4.5; // raio de influência em unidades de mundo
-
-      cubesRef.current.forEach((child) => {
-        if (!child) return;
-        const dx = child.userData.originX - cx;
-        const dy = child.userData.originY - cy;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < RADIUS) {
-          const lift = (1 - dist / RADIUS) * 0.35 * active;
-          child.position.z = child.userData.originZ + lift;
-        } else {
-          child.position.z = child.userData.originZ;
-        }
-      });
-    }
   });
 
   if (!geometries || cubeData.length === 0) return null;
@@ -311,48 +275,10 @@ function CameraRig() {
   return null;
 }
 
-/* ─────────────────────────────────────────────
-   CursorTracker: converte posição do mouse em
-   coordenadas de mundo e expõe via ref mutável
-   ───────────────────────────────────────────── */
-function CursorTracker({mousePos, cursorWorldPos}) {
-  const {camera, invalidate} = useThree();
-  const targetRef = useRef({x: 0, y: 0});
-
-  useEffect(() => {
-    if (mousePos.x === -999) return;
-    const zoomLevel = camera.zoom;
-    targetRef.current = {
-      x: mousePos.x / zoomLevel - window.innerWidth / 2 / zoomLevel,
-      y: -(mousePos.y / zoomLevel - window.innerHeight / 2 / zoomLevel),
-    };
-  }, [camera.zoom, mousePos]);
-
-  useFrame(() => {
-    if (!cursorWorldPos) return;
-
-    if (mousePos.x === -999) {
-      cursorWorldPos.active += (0 - cursorWorldPos.active) * 0.08;
-      return;
-    }
-
-    cursorWorldPos.active += (1 - cursorWorldPos.active) * 0.08;
-    cursorWorldPos.x += (targetRef.current.x - cursorWorldPos.x) * 0.08;
-    cursorWorldPos.y += (targetRef.current.y - cursorWorldPos.y) * 0.08;
-    invalidate();
-  });
-
-  return null;
-}
-
 export default function Hero() {
-  const [mouse, setMouse] = useState({x: -999, y: -999});
   const [isHeroActive, setIsHeroActive] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const sectionRef = useRef(null);
-
-  // Objeto mutável compartilhado entre CursorTracker e CubeGrid
-  const cursorWorldPos = useMemo(() => ({x: 0, y: 0, active: 0}), []);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -380,13 +306,6 @@ export default function Hero() {
     <section
       ref={sectionRef}
       id="hero"
-      onMouseMove={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        setMouse({x: e.clientX - rect.left, y: e.clientY - rect.top});
-      }}
-      onMouseLeave={() => {
-        setMouse({x: -999, y: -999});
-      }}
       className="relative w-full overflow-hidden bg-[#080808] h-dvh min-h-dvh max-h-dvh">
       <Canvas
         orthographic
@@ -405,14 +324,9 @@ export default function Hero() {
           <ambientLight intensity={0.4} color="#3a3a3a" />
           <directionalLight position={[0, 20, 10]} intensity={3.0} color="#B5B5B5" />
           <CameraRig />
-
-          <CursorTracker mousePos={mouse} cursorWorldPos={cursorWorldPos} />
-          {/* <GlowCursor mousePos={mouse} /> */}
-          <CursorLight cursorWorldPos={cursorWorldPos} />
-          <CubeGrid cursorWorldPos={cursorWorldPos} />
+          <CubeGrid />
         </Suspense>
       </Canvas>{" "}
-      {/* <GlowCursor mousePos={mouse} /> */}
       {/* Vinheta suave e elegante para profundidade, sem sufocar a geometria 3D */}
       <div
         className="pointer-events-none absolute inset-0 z-[2]"
@@ -425,22 +339,6 @@ export default function Hero() {
           )`,
         }}
       />
-      {/* ── Vinheta azulada nos cantos (cor/glow, sem blur) ── 
-      <div
-        className="absolute inset-0 z-[2] pointer-events-none"
-        aria-hidden="true"
-        style={{
-          background: [
-            "radial-gradient(ellipse 45% 45% at 0% 0%, rgba(40,80,180,0.22) 0%, transparent 100%)",
-            "radial-gradient(ellipse 45% 45% at 100% 0%, rgba(40,80,180,0.18) 0%, transparent 100%)",
-            "radial-gradient(ellipse 35% 35% at 0% 100%, rgba(30,60,140,0.10) 0%, transparent 100%)",
-            "radial-gradient(ellipse 35% 35% at 100% 100%, rgba(30,60,140,0.08) 0%, transparent 100%)",
-          ].join(", "),
-        }}
-      />*/}
-      {/* Passo 4: Overlays SVG de linhas arquitetônicas removidos.
-          O Spline original NÃO usa esses elementos — toda a estética
-          vem do material 3D, iluminação e chanfros. */}
       <div className="absolute top-1/2 left-4 right-auto -translate-y-1/2 z-10 pointer-events-none flex flex-col items-start text-left gap-6 sm:left-[clamp(1.5rem,3vw,3rem)] sm:gap-[2.75rem] w-[calc(100%-2rem)] sm:w-auto max-w-[min(42rem,90vw)]">
         <h1
           className="font-ivy-presto text-[clamp(3.3rem,12vw,4.8rem)] sm:text-[clamp(3rem,4.7vw+1.4rem,6.4rem)] font-bold tracking-[0.01em] sm:tracking-[0.03em] text-[#eaeaea] leading-[0.92] sm:leading-[0.95] m-0 max-w-[13ch] sm:max-w-none"

@@ -3,25 +3,24 @@
 import {useEffect, useState} from "react";
 import Link from "next/link";
 
-const STORAGE_KEY = "montabox-cookie-consent";
+const STORAGE_KEY = "montabox-cookie-notice";
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (!saved) setVisible(true);
+      if (!window.localStorage.getItem(STORAGE_KEY)) setVisible(true);
     } catch {
       setVisible(true);
     }
   }, []);
 
-  function save(choice) {
+  function close() {
     try {
-      window.localStorage.setItem(STORAGE_KEY, choice);
+      window.localStorage.setItem(STORAGE_KEY, "ok");
     } catch {
-      // se o navegador bloquear o armazenamento, o banner apenas fecha
+      // se o navegador bloquear o armazenamento, o aviso apenas fecha
     }
     setVisible(false);
   }
@@ -31,28 +30,22 @@ export default function CookieBanner() {
   return (
     <div
       role="dialog"
-      aria-label="Aviso de cookies"
+      aria-label="Aviso"
       className="font-neuehaas fixed bottom-4 left-4 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-[5px] border border-[#2c2c2c] bg-[#121212]/55 p-4 text-[#eaeaea] shadow-[0_4px_12px_rgba(0,0,0,0.4)] backdrop-blur-sm">
       <p className="text-[0.7rem] leading-relaxed text-[#acaba9]">
-        Usamos apenas o necessário para o site funcionar. Veja nossa{" "}
+        Este site não coleta dados pessoais. Veja nossa{" "}
         <Link href="/privacidade" className="text-[#eaeaea] underline underline-offset-2">
           política de privacidade
         </Link>
         .
       </p>
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex justify-end">
         <button
           type="button"
-          onClick={() => save("recusado")}
-          className="border-[#acaba9]/40 bg-transparent px-4 py-2 text-[0.6rem] uppercase tracking-[0.16em] text-[#eaeaea] transition-colors hover:border-[#eaeaea]">
-          Recusar
-        </button>
-        <button
-          type="button"
-          onClick={() => save("aceito")}
+          onClick={close}
           className="rounded-tr-[99px] rounded-bl-[99px] rounded-br-[99px] bg-[#eaeaea] px-4 py-2 text-[0.6rem] uppercase tracking-[0.16em] text-[#000000] transition-opacity hover:opacity-85">
-          Aceitar
+          OK
         </button>
       </div>
     </div>
