@@ -314,7 +314,8 @@ export default function Hero() {
         gl={{alpha: true}}
         camera={{
           position: [0, 0, 100],
-          zoom: typeof window !== "undefined" && window.innerWidth < 768 ? 45 : 80,
+          // Zoom da grade: aumente 45 para aproximar no mobile e mostrar menos quadros; no desktop o valor é 80.
+          zoom: typeof window !== "undefined" && window.innerWidth < 768 ? 80 : 80,
           near: 0.1,
           far: 500,
         }}

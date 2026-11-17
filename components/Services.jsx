@@ -55,8 +55,8 @@ export default function Services({isRevealed, inView = false}) {
   return (
     <section
       id="servicos"
-      className="relative z-10 h-full min-h-screen bg-[#121212] flex flex-col justify-center px-4 py-16 sm:px-6 sm:py-24 md:px-16 lg:px-24">
-      <div className="max-w-7xl mx-auto w-full">
+      className="relative z-10 h-auto min-h-[80svh] w-full min-w-0 max-w-full self-center box-border bg-[#121212] flex flex-col justify-center px-4 py-4 sm:px-6 sm:py-12 md:px-16 lg:px-24 lg:h-full lg:min-h-screen">
+      <div className="max-w-7xl min-w-0 mx-auto w-full">
         <div ref={headerRef} className="mb-12 sm:mb-20 flex items-center justify-center gap-3 sm:gap-6">
           <BlurTextReveal
             animationType="chars"

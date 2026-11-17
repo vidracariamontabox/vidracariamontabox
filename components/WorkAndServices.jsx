@@ -84,6 +84,7 @@ export default function WorkAndServices({onPreloadNext}) {
   const trackRef = useRef(null);
   const cardInnerRefs = useRef([]);
   const [isServicesRevealed, setIsServicesRevealed] = useState(false);
+  const [activeCard, setActiveCard] = useState(0);
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : false,
   );
@@ -279,7 +280,7 @@ export default function WorkAndServices({onPreloadNext}) {
       <div
         ref={wrapperRef}
         className="relative w-full h-auto lg:h-full bg-gradient-to-r from-black via-[#0a0a0a] to-[#1a1a1a] z-20 lg:will-change-transform overflow-hidden m-0 p-0">
-        <div
+        {isDesktop && <div
           ref={trackRef}
           className="flex flex-col w-full h-auto m-0 p-0 lg:flex-row lg:h-full lg:items-center lg:will-change-transform">
           <div className={blockClass}>
@@ -392,10 +393,73 @@ export default function WorkAndServices({onPreloadNext}) {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
 
         {!isDesktop && (
-          <div className="relative w-full min-h-dvh bg-black">
+          <div className="w-full bg-black">
+            <div className={`${blockClass} !px-5`}>
+              <div className="max-w-md w-full px-0">
+                <p className="mb-5 text-[0.58rem] font-light tracking-[0.2em] uppercase text-[#75706f] font-neuehaas">Quem somos</p>
+                <div className="flex flex-col mb-5">
+                  <h2 className="text-[clamp(1.8rem,3vw,2.5rem)] uppercase font-bold tracking-tight leading-[1.02] text-[#eaeaea] font-familjen"><HoverBlur>Montabox</HoverBlur></h2>
+                  <BlurTextReveal html='Vidraçaria e Serralheria <span class="text-[#acaba9]">de Alumínio.</span>' animationType="words" stagger={0.1} delay={0.2} className="block overflow-hidden pl-[0.08em] text-[0.9rem] uppercase font-bold tracking-tight text-[#d8d8d8] font-familjen" />
+                </div>
+                <div className="mt-5 mb-5 h-px bg-[#75706f]/20 w-full" />
+                <p className="font-light text-[0.78rem] leading-[1.55] text-[#acaba9] mb-6 font-neuehaas">Especializada em projetos grandes, residenciais e comerciais, entregamos soluções que unem estética refinada e engenharia de alta performance.</p>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="flex flex-col gap-1"><span className="text-[clamp(1.2rem,1.5vw,1.8rem)] font-bold tracking-tight text-[#eaeaea] font-familjen">35+</span><span className="text-[0.55rem] font-light tracking-[0.18em] uppercase text-[#75706f] font-neuehaas">anos de mercado</span></div>
+                  <div className="flex flex-col gap-1"><span className="text-[clamp(1.2rem,1.5vw,1.8rem)] font-bold tracking-tight text-[#eaeaea] font-familjen">7.040+</span><span className="text-[0.55rem] font-light tracking-[0.18em] uppercase text-[#75706f] font-neuehaas">projetos concluídos</span></div>
+                </div>
+                <div className="mt-8"><BlurTextReveal text="Principais projetos" animationType="chars" stagger={0.05} className="font-familjen text-lg font-bold tracking-tighter text-white uppercase" /></div>
+              </div>
+            </div>
+
+            <p className="text-center text-[0.55rem] tracking-[0.18em] uppercase text-[#75706f] font-neuehaas mb-3 select-none">← Arraste para o lado →</p>
+            <div
+              ref={trackRef}
+              onScroll={(event) => {
+                const track = event.currentTarget;
+                const firstCard = track.firstElementChild;
+                const cardWidth = firstCard?.getBoundingClientRect().width ?? track.clientWidth * 0.8;
+                const gap = Number.parseFloat(window.getComputedStyle(track).columnGap) || 0;
+                const cardStride = cardWidth + gap;
+                setActiveCard(Math.max(0, Math.min(IMAGES.length - 1, Math.round(track.scrollLeft / cardStride))));
+              }}
+              className="flex w-full gap-0 overflow-x-scroll scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              {IMAGES.map((img, i) => (
+                <div key={i} className={`${blockClass} !w-full !px-0 snap-center flex-shrink-0`}>
+                  <div ref={(el) => (cardInnerRefs.current[i + 1] = el)} className="flex flex-col items-center w-full will-change-transform px-2 sm:px-0">
+                    <div className="relative w-[80%] mx-auto sm:w-[90%] aspect-[9/16] lg:w-[95%] lg:aspect-[640/439] group overflow-hidden bg-zinc-900 border border-white/5 rounded-[5px]">
+                      <Image src={img.src} alt={img.alt} fill sizes="(max-width: 1023px) 80vw, 45vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-40" />
+                    </div>
+                    <div className="mt-4 sm:mt-6 w-[80%] mx-auto sm:w-[90%] text-left">
+                      <span className="block text-[8px] uppercase tracking-[0.25em] text-white/40 mb-1 font-neuehaas font-bold">{img.year} — Obra</span>
+                      <h3 className="text-sm md:text-base font-bold uppercase text-white font-familjen leading-tight tracking-tight mb-2">{img.title}</h3>
+                      <p className="text-[15px] md:text-[14px] font-neuehaas text-[#75706f] leading-relaxed max-w-[90%]">{img.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-center gap-2 mt-4">
+              {IMAGES.map((_, i) => <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${i === activeCard ? "bg-[#eaeaea]" : "bg-[#75706f]/40"}`} />)}
+            </div>
+
+            <div className={`${blockClass} !py-12 !px-4`}>
+              <div ref={(el) => (cardInnerRefs.current[IMAGES.length + 1] = el)} className="flex flex-col items-center w-full will-change-transform px-2 sm:px-0">
+                <div className="w-full sm:w-[95%] flex flex-col justify-center items-center text-center bg-transparent px-3 sm:px-0">
+                  <h3 className="text-xl md:text-2xl font-bold uppercase text-white font-familjen mb-4 leading-tight tracking-tight">Visite nosso <br /> <span className="text-[#acaba9]">Instagram</span></h3>
+                  <p className="font-neuehaas text-[0.85rem] text-[#75706f] mb-8 max-w-xs leading-relaxed">Confira nossa coleção completa de experiências e projetos executados.</p>
+                  <a href="https://www.instagram.com/montabox_vidros/" target="_blank" rel="noopener noreferrer" className="px-6 py-3 border border-white/20 rounded-tr-[99px] rounded-bl-[99px] rounded-br-[99px] bg-transparent text-white font-neuehaas text-[0.6rem] tracking-[0.16em] uppercase hover:bg-white hover:text-black transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">Seguir no Instagram →</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isDesktop && (
+          <div className="relative w-full min-h-[80svh] bg-black">
             <Services isRevealed={isServicesRevealed} inView />
           </div>
         )}
